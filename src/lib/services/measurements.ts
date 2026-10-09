@@ -14,7 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Measurement, Child } from "@/types/schema";
-import { calculateGrowthStatus } from "@/lib/who-standards";
+import { calculateGrowthStatus, calculateChildZScores } from "@/lib/who-standards";
 import { differenceInMonths } from "date-fns";
 
 const COLLECTION_NAME = "measurements";
@@ -74,13 +74,22 @@ export const addMeasurement = async (data: CreateMeasurementInput) => {
       prevHeight, data.height, "length"
     );
 
-    const combinedNotes = `[AUTO] BB: ${weightAnalysis.message} | TB: ${lengthAnalysis.message}`;
+    const ageInMonths = differenceInMonths(currentMeasDate, childDob);
+    const zScoreAssessment = calculateChildZScores({
+      gender: child.gender,
+      ageInMonths,
+      weight: data.weight,
+      height: data.height,
+      headCircumference: data.headCircumference,
+    });
+
+    const combinedNotes = `[AUTO] Z-Score: ${zScoreAssessment.summaryDiagnosis} | Vel BB: ${weightAnalysis.message} | Vel TB: ${lengthAnalysis.message}`;
 
     const docData: Record<string, any> = {
       childId: data.childId,
       posyanduId: data.posyanduId,
       date: Timestamp.fromDate(currentMeasDate),
-      ageInMonths: differenceInMonths(currentMeasDate, childDob),
+      ageInMonths,
       weight: data.weight,
       height: data.height,
       headCircumference: data.headCircumference || 0,
@@ -88,6 +97,17 @@ export const addMeasurement = async (data: CreateMeasurementInput) => {
       lengthStatus: lengthAnalysis.status,
       weightIncrement: weightAnalysis.actualIncrement,
       lengthIncrement: lengthAnalysis.actualIncrement,
+      
+      // Z-Score Standard WHO & Kemenkes
+      zScoreWFA: zScoreAssessment.wfa.zScore,
+      zScoreHFA: zScoreAssessment.hfa.zScore,
+      zScoreWFH: zScoreAssessment.wfh.zScore,
+      zScoreHCFA: zScoreAssessment.hcfa?.zScore,
+      wfaStatus: zScoreAssessment.wfa.status,
+      hfaStatus: zScoreAssessment.hfa.status,
+      wfhStatus: zScoreAssessment.wfh.status,
+      nutritionSummary: zScoreAssessment.summaryDiagnosis,
+
       notes: combinedNotes,
       createdAt: serverTimestamp(), 
       createdBy: data.kaderId
@@ -101,6 +121,12 @@ export const addMeasurement = async (data: CreateMeasurementInput) => {
         lastHeight: data.height,
         lastWeightStatus: weightAnalysis.status,
         lastLengthStatus: lengthAnalysis.status,
+        lastZScoreWFA: zScoreAssessment.wfa.zScore,
+        lastZScoreHFA: zScoreAssessment.hfa.zScore,
+        lastZScoreWFH: zScoreAssessment.wfh.zScore,
+        lastNutritionStatus: zScoreAssessment.summaryDiagnosis,
+        isStunted: zScoreAssessment.isStunted,
+        isWasted: zScoreAssessment.isWasted,
         lastMeasurementDate: Timestamp.fromDate(currentMeasDate)
     });
 

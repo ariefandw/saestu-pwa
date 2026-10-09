@@ -75,9 +75,18 @@ export default function PuskesmasDashboard() {
         // 3. Filter Data Anak berdasarkan Posyandu ID
         const myChildren = allChildren.filter(c => myPosyanduIds.includes(c.posyanduId));
         
-        // 4. Identifikasi Anak Berisiko Tinggi (Intervensi)
+        // 4. Identifikasi Kasus Stunting Nyata & Anak Berisiko Tinggi
+        const stuntedChildren = myChildren.filter(c => 
+            c.isStunted === true || (c.lastZScoreHFA !== undefined && c.lastZScoreHFA < -2)
+        );
+
         const riskList = myChildren.filter(c => 
-            c.lastLengthStatus === 'inadequate' || c.lastWeightStatus === 'inadequate'
+            c.isStunted === true || 
+            (c.lastZScoreHFA !== undefined && c.lastZScoreHFA < -2) ||
+            c.isWasted === true ||
+            (c.lastZScoreWFH !== undefined && c.lastZScoreWFH < -2) ||
+            c.lastLengthStatus === 'inadequate' || 
+            c.lastWeightStatus === 'inadequate'
         ).map(child => {
             const posyanduName = myPosyandus.find(p => p.id === child.posyanduId)?.name || "Unknown";
             return { ...child, posyanduName };
@@ -94,36 +103,49 @@ export default function PuskesmasDashboard() {
         setStats({
             totalBalita: myChildren.length,
             totalPengukuran: activeMeasurementCount,
-            totalStunting: riskList.length,
+            totalStunting: stuntedChildren.length,
             totalKader: myKaders.length,
             posyanduCount: myPosyandus.length
         });
 
         setHighRiskChildren(riskList);
 
-        // 6. Siapkan Data Agregat untuk Chart (FIX TypeScript Error Type Overlap)
+        // 6. Siapkan Data Agregat untuk Chart Berdasarkan Standar WHO / Kemenkes
         let wNormal = 0, wKurang = 0, wLebih = 0, wAwal = 0;
         let hNormal = 0, hStunting = 0, hAwal = 0;
 
         myChildren.forEach(c => {
-           const weightStatus = c.lastWeightStatus as string;
-           const lengthStatus = c.lastLengthStatus as string;
+           // Aggregasi Berat (WFA / Velocity)
+           if (c.lastZScoreWFA !== undefined) {
+              if (c.lastZScoreWFA < -2) wKurang++;
+              else if (c.lastZScoreWFA > 1) wLebih++;
+              else wNormal++;
+           } else {
+              const weightStatus = c.lastWeightStatus as string;
+              if (weightStatus === 'adequate') wNormal++;
+              else if (weightStatus === 'inadequate') wKurang++;
+              else if (weightStatus === 'excess') wLebih++;
+              else wAwal++;
+           }
 
-           // Aggregasi Berat
-           if (weightStatus === 'adequate') wNormal++;
-           else if (weightStatus === 'inadequate') wKurang++;
-           else if (weightStatus === 'excess') wLebih++;
-           else wAwal++; // unknown/data awal
-
-           // Aggregasi Tinggi
-           if (lengthStatus === 'adequate' || lengthStatus === 'excess') hNormal++;
-           else if (lengthStatus === 'inadequate') hStunting++;
-           else hAwal++; // unknown
+           // Aggregasi Tinggi (HFA / Stunting vs Normal)
+           if (c.lastZScoreHFA !== undefined) {
+              if (c.lastZScoreHFA < -2) hStunting++;
+              else hNormal++;
+           } else if (c.isStunted) {
+              hStunting++;
+           } else if (c.lastLengthStatus === 'adequate') {
+              hNormal++;
+           } else if (c.lastLengthStatus === 'inadequate') {
+              hStunting++;
+           } else {
+              hAwal++;
+           }
         });
 
         setChartDataWeight([
            { name: 'Normal', value: wNormal, color: '#10b981' }, 
-           { name: 'Risiko', value: wKurang, color: '#f59e0b' },  
+           { name: 'Risiko / Kurang', value: wKurang, color: '#f59e0b' },  
            { name: 'Berlebih', value: wLebih, color: '#6366f1' },   
            { name: 'Data Awal', value: wAwal, color: '#94a3b8' },   
         ]);

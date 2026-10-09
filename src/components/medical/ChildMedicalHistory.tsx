@@ -18,6 +18,7 @@ import {
   TrendingUp,
   TrendingDown
 } from 'lucide-react';
+import { calculateChildZScores } from '@/lib/who-standards';
 
 interface ChildMedicalHistoryProps {
   child: Child;
@@ -222,15 +223,65 @@ export default function ChildMedicalHistory({
                            </div>
                         </div>
 
-                        {/* Status Badges */}
-                        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-50">
-                           <Badge variant={getStatusVariant(m.weightStatus)} className="text-[8px] sm:text-[9px] border-0 py-0.5">
-                             BB: {getStatusLabel(m.weightStatus)}
-                           </Badge>
-                           <Badge variant={getStatusVariant(m.lengthStatus)} className="text-[8px] sm:text-[9px] border-0 py-0.5">
-                             TB: {getStatusLabel(m.lengthStatus)}
-                           </Badge>
-                        </div>
+                        {/* Status Badges Antropometri (Z-Score & Velocity) */}
+                        {(() => {
+                          let zHFA = m.zScoreHFA;
+                          let zWFA = m.zScoreWFA;
+                          let zWFH = m.zScoreWFH;
+
+                          if (zHFA === undefined || zWFA === undefined) {
+                            const assessed = calculateChildZScores({
+                              gender: child.gender,
+                              ageInMonths: m.ageInMonths,
+                              weight: m.weight,
+                              height: m.height,
+                              headCircumference: m.headCircumference,
+                            });
+                            zHFA = assessed.hfa.zScore;
+                            zWFA = assessed.wfa.zScore;
+                            zWFH = assessed.wfh.zScore;
+                          }
+
+                          return (
+                            <div className="space-y-2 mt-4 pt-3 border-t border-slate-50">
+                              {/* Z-Score Indicators */}
+                              <div className="flex flex-wrap gap-1.5 items-center">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-1">Z-Score:</span>
+                                <Badge 
+                                  variant={zHFA < -2 ? "danger" : "neutral"} 
+                                  className="text-[8px] sm:text-[9px] border-0 py-0.5"
+                                >
+                                  TB/U: {zHFA > 0 ? `+${zHFA}` : zHFA} SD {zHFA < -3 ? '(Severely Stunted)' : zHFA < -2 ? '(Stunted)' : '(Normal)'}
+                                </Badge>
+                                <Badge 
+                                  variant={zWFA < -2 ? "warning" : "neutral"} 
+                                  className="text-[8px] sm:text-[9px] border-0 py-0.5"
+                                >
+                                  BB/U: {zWFA > 0 ? `+${zWFA}` : zWFA} SD
+                                </Badge>
+                                {zWFH !== undefined && (
+                                  <Badge 
+                                    variant={zWFH < -2 ? "danger" : zWFH > 2 ? "warning" : "success"} 
+                                    className="text-[8px] sm:text-[9px] border-0 py-0.5"
+                                  >
+                                    BB/TB: {zWFH > 0 ? `+${zWFH}` : zWFH} SD
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Growth Velocity */}
+                              <div className="flex flex-wrap gap-1.5 items-center">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-1">Velocity:</span>
+                                <Badge variant={getStatusVariant(m.weightStatus)} className="text-[8px] sm:text-[9px] border-0 py-0.5">
+                                  BB: {getStatusLabel(m.weightStatus)}
+                                </Badge>
+                                <Badge variant={getStatusVariant(m.lengthStatus)} className="text-[8px] sm:text-[9px] border-0 py-0.5">
+                                  TB: {getStatusLabel(m.lengthStatus)}
+                                </Badge>
+                              </div>
+                            </div>
+                          );
+                        })()}
                         
                         {/* Catatan (Jika ada) */}
                         {m.notes && (

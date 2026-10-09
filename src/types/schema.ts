@@ -56,6 +56,14 @@ export interface Child {
 
   lastWeight?: number;
   lastHeight?: number;
+
+  // --- [Z-SCORE STANDARDS] Antropometri Kemenkes & WHO ---
+  lastZScoreWFA?: number; // BB/U
+  lastZScoreHFA?: number; // TB/U (Stunting Indicator)
+  lastZScoreWFH?: number; // BB/TB (Wasting Indicator)
+  lastNutritionStatus?: string;
+  isStunted?: boolean;
+  isWasted?: boolean;
 }
 
 // --- PENGUKURAN (CORE LOGIC) ---
@@ -75,6 +83,17 @@ export interface Measurement {
   
   weightIncrement?: number; 
   lengthIncrement?: number; 
+
+  // --- [Z-SCORE ENGINE] WHO 2006 & Permenkes No. 2/2020 ---
+  zScoreWFA?: number; // Berat Badan menurut Umur (BB/U)
+  zScoreHFA?: number; // Tinggi/Panjang Badan menurut Umur (TB/U - Indikator Stunting)
+  zScoreWFH?: number; // Berat Badan menurut Tinggi Badan (BB/TB - Indikator Wasting)
+  zScoreHCFA?: number; // Lingkar Kepala menurut Umur (LK/U)
+
+  wfaStatus?: "severely_underweight" | "underweight" | "normal" | "overweight_risk";
+  hfaStatus?: "severely_stunted" | "stunted" | "normal" | "tall";
+  wfhStatus?: "severely_wasted" | "wasted" | "normal" | "overweight_risk" | "overweight" | "obese";
+  nutritionSummary?: string;
   
   notes?: string;          
   createdAt: Timestamp | Date;

@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Child, Measurement } from "@/types/schema";
+import { calculateChildZScores } from "@/lib/who-standards";
 import { 
   Baby, 
   Scale, 
@@ -163,28 +164,61 @@ export default function ParentDashboard() {
                     </p>
 
                     {/* Data Box (Glassmorphism) */}
-                    <div className="mt-6 grid grid-cols-2 gap-3">
-                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 relative overflow-hidden group">
-                            <div className="absolute top-2 right-2 opacity-20 group-hover:scale-110 transition-transform"><Scale className="w-8 h-8" /></div>
-                            <p className="text-[9px] sm:text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1 relative z-10">Berat</p>
-                            <p className="text-xl sm:text-2xl font-black relative z-10">{lastMeasurement?.weight || "-"} <span className="text-[10px] font-medium opacity-60">kg</span></p>
-                            <div className="mt-2 relative z-10">
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${lastMeasurement?.weightStatus === 'adequate' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}`}>
-                                    {lastMeasurement?.weightStatus === 'adequate' ? '✅ Normal' : '⚠️ Waspada'}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 relative overflow-hidden group">
-                            <div className="absolute top-2 right-2 opacity-20 group-hover:scale-110 transition-transform"><Ruler className="w-8 h-8" /></div>
-                            <p className="text-[9px] sm:text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 relative z-10">Tinggi</p>
-                            <p className="text-xl sm:text-2xl font-black relative z-10">{lastMeasurement?.height || "-"} <span className="text-[10px] font-medium opacity-60">cm</span></p>
-                            <div className="mt-2 relative z-10">
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${lastMeasurement?.lengthStatus === 'adequate' ? 'bg-blue-500/20 text-blue-300' : 'bg-rose-500/20 text-rose-300'}`}>
-                                    {lastMeasurement?.lengthStatus === 'adequate' ? '✅ Normal' : '⚠️ Stunting'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                    {(() => {
+                        let zHFA = lastMeasurement?.zScoreHFA;
+                        let zWFA = lastMeasurement?.zScoreWFA;
+                        let zWFH = lastMeasurement?.zScoreWFH;
+
+                        if (lastMeasurement && (zHFA === undefined || zWFA === undefined)) {
+                            const assessed = calculateChildZScores({
+                                gender: child.gender,
+                                ageInMonths: lastMeasurement.ageInMonths,
+                                weight: lastMeasurement.weight,
+                                height: lastMeasurement.height,
+                            });
+                            zHFA = assessed.hfa.zScore;
+                            zWFA = assessed.wfa.zScore;
+                            zWFH = assessed.wfh.zScore;
+                        }
+
+                        const isStunted = zHFA !== undefined ? zHFA < -2 : false;
+                        const isUnderweight = zWFA !== undefined ? zWFA < -2 : false;
+
+                        return (
+                          <div className="mt-6 grid grid-cols-2 gap-3">
+                              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 relative overflow-hidden group">
+                                  <div className="absolute top-2 right-2 opacity-20 group-hover:scale-110 transition-transform"><Scale className="w-8 h-8" /></div>
+                                  <p className="text-[9px] sm:text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1 relative z-10">Berat Badan</p>
+                                  <p className="text-xl sm:text-2xl font-black relative z-10">{lastMeasurement?.weight || "-"} <span className="text-[10px] font-medium opacity-60">kg</span></p>
+                                  <div className="mt-2 relative z-10 flex flex-col gap-1">
+                                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md w-fit ${!isUnderweight ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}`}>
+                                          {!isUnderweight ? '✅ BB Normal' : '⚠️ BB Kurang'}
+                                      </span>
+                                      {zWFA !== undefined && (
+                                          <span className="text-[8px] font-bold text-slate-300 opacity-80">
+                                              Z: {zWFA > 0 ? `+${zWFA}` : zWFA} SD
+                                          </span>
+                                      )}
+                                  </div>
+                              </div>
+                              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 relative overflow-hidden group">
+                                  <div className="absolute top-2 right-2 opacity-20 group-hover:scale-110 transition-transform"><Ruler className="w-8 h-8" /></div>
+                                  <p className="text-[9px] sm:text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 relative z-10">Tinggi Badan</p>
+                                  <p className="text-xl sm:text-2xl font-black relative z-10">{lastMeasurement?.height || "-"} <span className="text-[10px] font-medium opacity-60">cm</span></p>
+                                  <div className="mt-2 relative z-10 flex flex-col gap-1">
+                                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md w-fit ${!isStunted ? 'bg-blue-500/20 text-blue-300' : 'bg-rose-500/20 text-rose-300'}`}>
+                                          {!isStunted ? '✅ TB Normal' : '⚠️ Stunting'}
+                                      </span>
+                                      {zHFA !== undefined && (
+                                          <span className="text-[8px] font-bold text-slate-300 opacity-80">
+                                              Z: {zHFA > 0 ? `+${zHFA}` : zHFA} SD
+                                          </span>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                        );
+                    })()}
                 </div>
             </Card>
 

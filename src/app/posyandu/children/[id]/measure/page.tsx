@@ -7,8 +7,10 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Child } from "@/types/schema";
 import { addMeasurement } from "@/lib/services/measurements";
+import { calculateChildZScores } from "@/lib/who-standards";
+import { differenceInMonths } from "date-fns";
 import { 
-  ArrowLeft, Save, Calendar, Weight, Ruler, Camera, X, RefreshCw, Brain, ScanLine, AlertCircle
+  ArrowLeft, Save, Calendar, Weight, Ruler, Camera, X, RefreshCw, Brain, ScanLine, AlertCircle, CheckCircle, AlertTriangle
 } from "lucide-react";
 
 // UI Components
@@ -333,6 +335,98 @@ function MeasurementForm() {
                             <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">CM</span>
                         </div>
                     </Card>
+
+                    {/* --- LIVE Z-SCORE PREVIEW --- */}
+                    {(() => {
+                        const numWeight = parseFloat(formData.weight);
+                        const numHeight = parseFloat(formData.height);
+                        if (!child || isNaN(numWeight) || numWeight <= 0 || isNaN(numHeight) || numHeight <= 0) {
+                            return null;
+                        }
+
+                        const childDob = (child.dob as any)?.toDate ? (child.dob as any).toDate() : new Date(child.dob as any);
+                        const measDate = formData.date ? new Date(formData.date) : new Date();
+                        const ageInMonths = differenceInMonths(measDate, childDob);
+                        const numHead = formData.headCircumference ? parseFloat(formData.headCircumference) : undefined;
+
+                        const assessment = calculateChildZScores({
+                            gender: child.gender,
+                            ageInMonths,
+                            weight: numWeight,
+                            height: numHeight,
+                            headCircumference: numHead,
+                        });
+
+                        const isAlert = assessment.isStunted || assessment.isWasted || assessment.isUnderweight;
+
+                        return (
+                            <Card className={cn(
+                                "p-6 rounded-3xl border-2 transition-all shadow-sm animate-in fade-in slide-in-from-bottom-2",
+                                isAlert ? "bg-rose-50/50 border-rose-200" : "bg-emerald-50/50 border-emerald-200"
+                            )}>
+                                <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-4">
+                                    <div className="flex items-center gap-2">
+                                        {isAlert ? (
+                                            <AlertTriangle className="w-5 h-5 text-rose-500" />
+                                        ) : (
+                                            <CheckCircle className="w-5 h-5 text-emerald-600" />
+                                        )}
+                                        <p className="text-xs font-black uppercase tracking-wider text-slate-800">
+                                            Analisis Z-Score Seketika (WHO / Kemenkes)
+                                        </p>
+                                    </div>
+                                    <Badge 
+                                        variant={isAlert ? "danger" : "success"}
+                                        className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1"
+                                    >
+                                        Usia {ageInMonths} Bulan
+                                    </Badge>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {/* TB/U - Stunting */}
+                                    <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">TB/U (Stunting)</p>
+                                        <p className={cn("text-xl font-black", assessment.hfa.zScore < -2 ? "text-rose-600" : "text-slate-800")}>
+                                            {assessment.hfa.zScore > 0 ? `+${assessment.hfa.zScore}` : assessment.hfa.zScore} <span className="text-xs font-bold opacity-60">SD</span>
+                                        </p>
+                                        <p className={cn("text-[10px] font-black uppercase mt-1", assessment.hfa.zScore < -2 ? "text-rose-600" : "text-slate-600")}>
+                                            {assessment.hfa.label}
+                                        </p>
+                                    </div>
+
+                                    {/* BB/U - Underweight */}
+                                    <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">BB/U (Berat)</p>
+                                        <p className={cn("text-xl font-black", assessment.wfa.zScore < -2 ? "text-amber-600" : "text-slate-800")}>
+                                            {assessment.wfa.zScore > 0 ? `+${assessment.wfa.zScore}` : assessment.wfa.zScore} <span className="text-xs font-bold opacity-60">SD</span>
+                                        </p>
+                                        <p className={cn("text-[10px] font-black uppercase mt-1", assessment.wfa.zScore < -2 ? "text-amber-600" : "text-slate-600")}>
+                                            {assessment.wfa.label}
+                                        </p>
+                                    </div>
+
+                                    {/* BB/TB - Wasting */}
+                                    <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">BB/TB (Gizi/Wasting)</p>
+                                        <p className={cn("text-xl font-black", assessment.wfh.zScore < -2 ? "text-rose-600" : "text-slate-800")}>
+                                            {assessment.wfh.zScore > 0 ? `+${assessment.wfh.zScore}` : assessment.wfh.zScore} <span className="text-xs font-bold opacity-60">SD</span>
+                                        </p>
+                                        <p className={cn("text-[10px] font-black uppercase mt-1", assessment.wfh.zScore < -2 ? "text-rose-600" : "text-slate-600")}>
+                                            {assessment.wfh.label}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 pt-3 border-t border-slate-200/50 flex items-center justify-between">
+                                    <span className="text-[11px] font-bold text-slate-600">Kesimpulan Klinis:</span>
+                                    <span className={cn("text-xs font-black uppercase tracking-wide", isAlert ? "text-rose-700" : "text-emerald-700")}>
+                                        {assessment.summaryDiagnosis}
+                                    </span>
+                                </div>
+                            </Card>
+                        );
+                    })()}
 
                     {/* --- DESKTOP SUBMIT BUTTON --- */}
                     <div className="hidden md:flex justify-end pt-4">

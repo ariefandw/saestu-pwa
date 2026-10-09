@@ -11,6 +11,13 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { Measurement } from '@/types/schema';
+import {
+  WFA_BOYS_TABLE,
+  WFA_GIRLS_TABLE,
+  LHFA_BOYS_TABLE,
+  LHFA_GIRLS_TABLE,
+  calculateChildZScores
+} from '@/lib/who-standards';
 
 interface GrowthChartProps {
   measurements: Measurement[];
@@ -64,15 +71,49 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
         }
     }
 
-    return processedData.map(item => ({
-      ...item,
-      displayDate: item.dateObj.toLocaleDateString("id-ID", { month: 'short' }),
-      fullDate: item.dateObj.toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }),
-      status: type === "weight" ? item.original.weightStatus : item.original.lengthStatus,
-    }));
+    const refTable = type === "weight"
+      ? (gender === "L" ? WFA_BOYS_TABLE : WFA_GIRLS_TABLE)
+      : (gender === "L" ? LHFA_BOYS_TABLE : LHFA_GIRLS_TABLE);
+
+    return processedData.map(item => {
+      const ageClamped = Math.min(60, Math.max(0, Math.round(item.age)));
+      const whoRef = refTable[ageClamped.toString()] || refTable["0"];
+
+      // Hitung / Ambil Z-Score
+      let zScore = type === "weight" ? item.original.zScoreWFA : item.original.zScoreHFA;
+      let zLabel = "";
+
+      if (zScore === undefined) {
+        const assessment = calculateChildZScores({
+          gender,
+          ageInMonths: item.age,
+          weight: type === "weight" ? item.value : (item.original.weight || 0),
+          height: type === "length" ? item.value : (item.original.height || 0),
+        });
+        zScore = type === "weight" ? assessment.wfa.zScore : assessment.hfa.zScore;
+        zLabel = type === "weight" ? assessment.wfa.label : assessment.hfa.label;
+      } else {
+        zLabel = type === "weight"
+          ? (item.original.wfaStatus || "Z-Score").replace(/_/g, ' ')
+          : (item.original.hfaStatus || "Z-Score").replace(/_/g, ' ');
+      }
+
+      return {
+        ...item,
+        displayDate: item.dateObj.toLocaleDateString("id-ID", { month: 'short' }),
+        fullDate: item.dateObj.toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }),
+        status: type === "weight" ? item.original.weightStatus : item.original.lengthStatus,
+        zScore,
+        zLabel,
+        whoMedian: whoRef ? whoRef.sd0 : undefined,
+        whoSD2neg: whoRef ? whoRef.sd2neg : undefined,
+        whoSD3neg: whoRef ? whoRef.sd3neg : undefined,
+        whoSD2pos: whoRef ? whoRef.sd2 : undefined,
+      };
+    });
   }, [measurements, type, timeFilter, gender]);
 
-  const lineColor = gender === 'L' ? "#3b82f6" : "#ec4899"; 
+  const lineColor = gender === 'L' ? "#2563eb" : "#ec4899"; 
   const labelY = type === "weight" ? "Berat (kg)" : "Tinggi (cm)";
 
   if (!isMounted) return <div className="h-full w-full bg-slate-50 animate-pulse rounded-2xl"></div>;
@@ -109,17 +150,29 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
                     const data = payload[0].payload;
                     let statusBg = "bg-slate-100 text-slate-600";
                     let statusLabel = "Data";
-                    if (data.status === 'adequate') { statusBg = "bg-emerald-100 text-emerald-700"; statusLabel = "Normal"; }
-                    else if (data.status === 'inadequate') { statusBg = "bg-rose-100 text-rose-700"; statusLabel = "Kurang"; }
+                    if (data.status === 'adequate') { statusBg = "bg-emerald-100 text-emerald-700"; statusLabel = "Adekuat"; }
+                    else if (data.status === 'inadequate') { statusBg = "bg-rose-100 text-rose-700"; statusLabel = "Seret"; }
                     else if (data.status === 'excess') { statusBg = "bg-amber-100 text-amber-700"; statusLabel = "Berlebih"; }
 
                     return (
-                      <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-2xl text-xs z-50">
+                      <div className="bg-white p-3.5 border border-slate-100 shadow-xl rounded-2xl text-xs z-50 min-w-[190px]">
                         <p className="font-black text-slate-800 border-b border-slate-50 pb-2 mb-2">{data.fullDate}</p>
                         <div className="space-y-1.5 font-medium">
-                            <div className="flex justify-between gap-4"><span className="text-slate-400">Usia</span><span className="text-slate-700">{data.age} Bln</span></div>
+                            <div className="flex justify-between gap-4"><span className="text-slate-400">Usia</span><span className="text-slate-700 font-bold">{data.age} Bln</span></div>
                             <div className="flex justify-between gap-4"><span className="text-slate-400">{labelY}</span><span className="font-black" style={{color: lineColor}}>{data.value}</span></div>
-                            <div className={`text-center mt-2 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${statusBg}`}>{statusLabel}</div>
+                            <div className="flex justify-between gap-4"><span className="text-slate-400">Median WHO (0 SD)</span><span className="font-bold text-emerald-600">{data.whoMedian ?? '-'}</span></div>
+                            <div className="flex justify-between gap-4 border-t border-slate-50 pt-1.5">
+                              <span className="text-slate-400">Z-Score</span>
+                              <span className={`font-black ${data.zScore < -2 ? 'text-rose-600' : 'text-slate-800'}`}>
+                                {data.zScore !== undefined ? (data.zScore > 0 ? `+${data.zScore}` : data.zScore) : '-'} SD
+                              </span>
+                            </div>
+                            {data.zLabel && (
+                              <p className="text-[10px] font-black uppercase text-slate-500 tracking-wider text-right">{data.zLabel}</p>
+                            )}
+                            <div className={`text-center mt-2 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${statusBg}`}>
+                              Velocity: {statusLabel}
+                            </div>
                         </div>
                       </div>
                     );
@@ -127,17 +180,46 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
                   return null;
                 }}
               />
+              
+              {/* Kurva Standar WHO (KMS) */}
+              <Line 
+                type="monotone" 
+                dataKey="whoMedian" 
+                stroke="#10b981" 
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="whoSD2neg" 
+                stroke="#f59e0b" 
+                strokeWidth={1.2}
+                strokeDasharray="3 3"
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="whoSD3neg" 
+                stroke="#ef4444" 
+                strokeWidth={1.2}
+                strokeDasharray="2 2"
+                dot={false}
+                isAnimationActive={false}
+              />
+
+              {/* Garis Ukur Aktual Anak */}
               <Line 
                 type="monotone" 
                 dataKey="value" 
                 stroke={lineColor} 
-                strokeWidth={4}
+                strokeWidth={3.5}
                 isAnimationActive={true} 
                 activeDot={{ r: 7, strokeWidth: 0, fill: lineColor }}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
-                  
-                  // [FIX TYPESCRIPT]: Type guard memastikan cx dan cy valid sebelum digambar
                   if (cx === undefined || cy === undefined || isNaN(Number(cx)) || isNaN(Number(cy))) {
                       return null;
                   }
@@ -147,7 +229,6 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
                   else if (payload.status === 'inadequate') fill = '#f43f5e';
                   else if (payload.status === 'excess') fill = '#f59e0b';
                   
-                  // Casting cx dan cy menjadi number secara eksplisit agar TS tidak protes
                   return <circle key={payload.fullDate} cx={Number(cx)} cy={Number(cy)} r={5} fill={fill} stroke="#fff" strokeWidth={2} />;
                 }}
               />
@@ -156,10 +237,25 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
         )}
       </div>
 
-      <div className="flex justify-center gap-4 mt-4 pt-2 border-t border-slate-50">
-        <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Normal</span></div>
-        <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span><span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Waspada</span></div>
+      {/* Legend Standar Pertumbuhan KMS */}
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-4 pt-2 border-t border-slate-50">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-1 rounded" style={{ backgroundColor: lineColor }}></span>
+          <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider">Hasil Ukur</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-0.5 border-t border-dashed border-emerald-500"></span>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">0 SD (Median)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-0.5 border-t border-dashed border-amber-500"></span>
+          <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider">-2 SD (Waspada)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-0.5 border-t border-dashed border-rose-500"></span>
+          <span className="text-[9px] font-bold text-rose-600 uppercase tracking-wider">-3 SD (Kritis)</span>
+        </div>
       </div>
     </div>
   );
-}
+}
