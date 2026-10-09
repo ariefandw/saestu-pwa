@@ -28,21 +28,21 @@ export function KaderBottomNav({ onQuickActionClick }: KaderBottomNavProps) {
           
           if (item.isSpecial) {
             return (
-              <button key={item.label} onClick={onQuickActionClick} className="flex flex-col items-center justify-center -mt-8 group relative z-10 transition-transform active:scale-95">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-xl shadow-blue-500/30 text-white border-4 border-white">
-                  <item.icon className="w-6 h-6" />
+              <button key={item.label} onClick={onQuickActionClick} className="flex flex-col items-center justify-center -mt-6 group relative z-10 transition-transform active:scale-95">
+                <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center shadow-md text-white border-2 border-white">
+                  <item.icon className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-black mt-1 text-slate-500">{item.label}</span>
+                <span className="text-xs font-semibold mt-1 text-slate-600">{item.label}</span>
               </button>
             )
           }
 
           return (
-            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1 group relative transition-all duration-300 w-12">
-              <div className={cn("p-1.5 rounded-xl transition-all duration-300", isActive ? "text-blue-600 bg-blue-50" : "text-slate-400 hover:text-slate-500")}>
-                <item.icon className={cn("w-6 h-6", isActive ? "stroke-[2.5px] fill-blue-50" : "stroke-[2px]")} />
+            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-0.5 group relative transition-all duration-200 w-14">
+              <div className={cn("p-1 rounded-lg transition-all", isActive ? "text-slate-900 bg-slate-100" : "text-slate-400 hover:text-slate-600")}>
+                <item.icon className={cn("w-5 h-5", isActive ? "stroke-[2.2px]" : "stroke-[1.8px]")} />
               </div>
-              <span className={cn("text-[9px] font-bold transition-colors duration-300", isActive ? "text-blue-700" : "text-slate-400")}>
+              <span className={cn("text-xs transition-colors", isActive ? "text-slate-900 font-semibold" : "text-slate-500 font-normal")}>
                 {item.label}
               </span>
             </Link>

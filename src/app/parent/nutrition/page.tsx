@@ -7,7 +7,6 @@ import { db } from "@/lib/firebase";
 import { Child, Measurement, Posyandu } from "@/types/schema";
 import { getMasterFoods } from "@/lib/services/nutrition";
 import { calculateAgeInMonths } from "@/lib/who-standards";
-import { TypewriterText } from "@/components/ui/TypewriterText"; 
 
 import { 
   Sparkles, 
@@ -49,7 +48,6 @@ export default function App() {
   const [aiResult, setAiResult] = useState<AIRecommendation | null>(null);
   const [aiError, setAiError] = useState("");
   const [isFromHistory, setIsFromHistory] = useState(false); 
-  const [isTypingAnalysisFinished, setIsTypingAnalysisFinished] = useState(false);
 
   const [toast, setToast] = useState<{ title: string; message: string; type: "success" | "error" } | null>(null);
 
@@ -79,7 +77,6 @@ export default function App() {
             if ((measurementData as any).aiRecommendation) {
               setAiResult((measurementData as any).aiRecommendation);
               setIsFromHistory(true);
-              setIsTypingAnalysisFinished(true);
             }
           } else {
             const dob = childData.dob instanceof Date ? childData.dob : (childData.dob as any).toDate();
@@ -132,7 +129,6 @@ export default function App() {
     
     setAiLoading(true);
     setAiError("");
-    setIsTypingAnalysisFinished(false);
 
     try {
       const posyanduRef = doc(db, "posyandus", child.posyanduId);
@@ -353,101 +349,84 @@ export default function App() {
         <div className="space-y-6">
             
             {isFromHistory && (
-               <div className="flex items-center gap-2 bg-indigo-50 px-3 py-2 rounded-xl text-indigo-600 print:hidden">
+               <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl text-slate-600 print:hidden">
                    <History className="w-4 h-4" />
-                   <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Memuat resep terakhir</p>
+                   <p className="text-xs font-semibold">Memuat resep terakhir</p>
                </div>
             )}
 
-            {/* KONDISI SI KECIL */}
-            {/* print:break-inside-avoid agar kotak ini tidak terpotong setengah jika kena pindah halaman PDF */}
-            <div className="bg-emerald-50 border border-emerald-100 p-4 sm:p-5 rounded-2xl flex gap-3 shadow-sm print:bg-emerald-50 print:border-emerald-200 print:shadow-none print:break-inside-avoid">
-                <div className="p-2 bg-emerald-100 rounded-xl h-fit text-emerald-600 shrink-0">
+            {/* KONDISI BALITA */}
+            <div className="bg-emerald-50/70 border border-emerald-200 p-4 sm:p-5 rounded-2xl flex gap-3 shadow-xs print:bg-emerald-50 print:border-emerald-200 print:shadow-none print:break-inside-avoid">
+                <div className="p-2 bg-emerald-100 rounded-xl h-fit text-emerald-700 shrink-0">
                     <Activity className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                    <h4 className="font-black text-slate-900 text-xs sm:text-sm uppercase tracking-wider">Kondisi Si Kecil</h4>
-                    <p className="text-[13px] sm:text-sm text-slate-700 mt-1.5 leading-relaxed font-medium">
-                        {isFromHistory ? (
-                            aiResult.statusAnalysis
-                        ) : (
-                            <TypewriterText 
-                                text={aiResult.statusAnalysis} 
-                                speed={15} 
-                                onComplete={() => setIsTypingAnalysisFinished(true)}
-                            />
-                        )}
+                    <h4 className="font-bold text-slate-900 text-sm">Analisis Kondisi Balita</h4>
+                    <p className="text-sm text-slate-700 mt-1 leading-relaxed">
+                        {aiResult.statusAnalysis}
                     </p>
                 </div>
             </div>
 
             {/* RESEP SPESIAL */}
-            {/* Di mode print, ubah background gelap jadi putih dengan border agar rapi dan hemat tinta */}
-            <Card className="bg-slate-900 text-white p-5 sm:p-6 rounded-3xl border-0 relative overflow-hidden shadow-xl print:bg-white print:text-slate-900 print:border-2 print:border-slate-200 print:shadow-none print:break-inside-avoid">
-                <div className="absolute top-0 right-0 p-4 opacity-5 print:hidden">
-                    <ChefHat className="w-24 h-24 sm:w-32 sm:h-32" />
-                </div>
-                <div className="relative z-10">
-                    <Badge className="bg-emerald-500 text-white border-0 px-2.5 py-0.5 font-black text-[9px] sm:text-[10px] uppercase mb-4 tracking-widest print:bg-emerald-100 print:text-emerald-800">
-                        Resep Spesial
+            <Card className="bg-white text-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs print:border-2 print:border-slate-300 print:shadow-none print:break-inside-avoid">
+                <div className="flex items-center justify-between mb-3">
+                    <Badge variant="success" className="px-2.5 py-0.5 text-xs font-semibold">
+                        Rekomendasi PMT Lokal
                     </Badge>
-                    <h3 className="text-xl sm:text-2xl font-black mb-5 leading-snug text-white pr-4 print:text-slate-900">
-                        {aiResult.recipeSuggestion.menuName}
-                    </h3>
-                    
-                    <div className="space-y-6">
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 print:bg-slate-50 print:border-slate-200">
-                            <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 print:text-slate-500">
-                                <Utensils className="w-3 h-3 text-emerald-400 print:text-emerald-600" /> Bahan Utama
-                            </p>
-                            <ul className="grid grid-cols-1 gap-2">
-                                {aiResult.recipeSuggestion.ingredients.map((ing, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-xs font-medium text-slate-200 leading-relaxed print:text-slate-800">
-                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-1 shrink-0" /> {ing}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold mb-5 text-slate-900">
+                    {aiResult.recipeSuggestion.menuName}
+                </h3>
+                
+                <div className="space-y-5">
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                            <Utensils className="w-3.5 h-3.5 text-slate-500" /> Bahan Utama
+                        </p>
+                        <ul className="grid grid-cols-1 gap-2">
+                            {aiResult.recipeSuggestion.ingredients.map((ing, i) => (
+                                <li key={i} className="flex items-start gap-2 text-xs font-medium text-slate-700 leading-relaxed">
+                                    <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full mt-1.5 shrink-0" /> {ing}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
-                        <div>
-                            <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 print:text-slate-500">
-                                <Clock className="w-3 h-3 text-emerald-400 print:text-emerald-600" /> Langkah Masak
-                            </p>
-                            <ol className="space-y-3">
-                                {aiResult.recipeSuggestion.instructions.map((step, i) => (
-                                    <li key={i} className="flex gap-2.5 text-xs text-slate-300 leading-relaxed print:text-slate-800">
-                                        <span className="font-black text-emerald-500 shrink-0">{i + 1}.</span> {step}
-                                    </li>
-                                ))}
-                            </ol>
-                        </div>
+                    <div>
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 text-slate-500" /> Langkah Memasak
+                        </p>
+                        <ol className="space-y-2.5">
+                            {aiResult.recipeSuggestion.instructions.map((step, i) => (
+                                <li key={i} className="flex gap-2.5 text-xs text-slate-700 leading-relaxed">
+                                    <span className="font-bold text-slate-900 shrink-0">{i + 1}.</span> {step}
+                                </li>
+                            ))}
+                        </ol>
                     </div>
                 </div>
             </Card>
 
             {/* NUTRISI PENTING */}
-            <Card className="p-5 sm:p-6 rounded-3xl border-slate-100 shadow-sm bg-white print:border-slate-200 print:shadow-none print:break-inside-avoid">
-                <h4 className="font-black text-slate-800 flex items-center gap-2 mb-5 uppercase text-[10px] sm:text-xs tracking-widest">
-                    <Apple className="w-4 h-4 text-emerald-500" /> Nutrisi Penting
+            <Card className="p-5 sm:p-6 rounded-2xl border-slate-200 shadow-xs bg-white print:border-slate-200 print:shadow-none print:break-inside-avoid">
+                <h4 className="font-bold text-slate-900 flex items-center gap-2 mb-4 text-xs uppercase tracking-wider">
+                    <Apple className="w-4 h-4 text-emerald-600" /> Nutrisi Utama
                 </h4>
-                <div className="space-y-4">
+                <div className="space-y-3.5">
                     {aiResult.recommendedFoods.map((food, idx) => (
-                        <div key={idx} className="flex gap-3 items-start border-b border-slate-50 pb-4 last:border-0 last:pb-0 print:border-slate-100">
-                            <div className="p-1.5 bg-slate-50 rounded-lg text-emerald-600 shrink-0 mt-0.5 print:bg-emerald-50">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
+                        <div key={idx} className="flex gap-3 items-start border-b border-slate-100 pb-3.5 last:border-0 last:pb-0">
+                            <div className="p-1.5 bg-emerald-50 rounded-lg text-emerald-600 shrink-0 mt-0.5">
+                                <CheckCircle2 className="w-4 h-4" />
                             </div>
-                            <div>
-                                <p className="font-bold text-slate-800 text-xs sm:text-sm">{food.foodName}</p>
-                                <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed print:text-slate-600">
-                                    {isFromHistory ? (
-                                        food.reason
-                                    ) : isTypingAnalysisFinished ? (
-                                        <TypewriterText text={food.reason} speed={10} />
-                                    ) : (
-                                        <span className="opacity-0">.</span>
-                                    )}
+                            <div className="flex-1">
+                                <p className="font-bold text-slate-900 text-sm">{food.foodName}</p>
+                                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                                    {food.reason}
                                 </p>
-                                <Badge variant="neutral" className="mt-2 bg-indigo-50 text-indigo-700 border-0 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider print:bg-slate-100 print:text-slate-700">{food.portionTip}</Badge>
+                                <Badge variant="neutral" className="mt-2 bg-slate-100 text-slate-700 border-0 text-xs font-medium">
+                                    Porsi: {food.portionTip}
+                                </Badge>
                             </div>
                         </div>
                     ))}
@@ -455,14 +434,14 @@ export default function App() {
             </Card>
 
             {aiResult.warnings.length > 0 && (
-                <div className="bg-rose-50 border border-rose-100 p-4 sm:p-5 rounded-2xl shadow-sm print:bg-white print:border-rose-200 print:shadow-none print:break-inside-avoid">
-                    <h4 className="font-black text-rose-800 text-xs sm:text-sm flex items-center gap-2 mb-2.5">
-                        <AlertTriangle className="w-4 h-4" /> Catatan Tambahan
+                <div className="bg-rose-50 border border-rose-200 p-4 sm:p-5 rounded-2xl shadow-xs print:bg-white print:border-rose-200 print:shadow-none print:break-inside-avoid">
+                    <h4 className="font-bold text-rose-900 text-xs flex items-center gap-2 mb-2 uppercase tracking-wider">
+                        <AlertTriangle className="w-4 h-4 text-rose-600" /> Catatan Kesehatan
                     </h4>
                     <ul className="space-y-1.5">
                         {aiResult.warnings.map((warn, i) => (
-                            <li key={i} className="text-[11px] sm:text-xs text-rose-700 leading-relaxed flex gap-2 items-start">
-                                <div className="w-1 h-1 bg-rose-400 rounded-full mt-1.5 shrink-0" /> {warn}
+                            <li key={i} className="text-xs text-rose-800 leading-relaxed flex gap-2 items-start">
+                                <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-1.5 shrink-0" /> {warn}
                             </li>
                         ))}
                     </ul>
@@ -473,17 +452,16 @@ export default function App() {
             <div className="flex flex-col gap-3 pt-2 print:hidden">
                 <Button 
                     onClick={printDocument} 
-                    disabled={!isTypingAnalysisFinished && !isFromHistory}
-                    className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm tracking-tight shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm tracking-tight shadow-sm flex items-center justify-center gap-2"
                 >
-                    <Printer className="w-5 h-5" />
-                    Cetak Laporan PDF (Resmi)
+                    <Printer className="w-4 h-4" />
+                    Cetak Laporan PDF
                 </Button>
                 
                 <Button 
                     variant="outline" 
                     onClick={handleRegenerate} 
-                    className="w-full h-12 rounded-2xl border-slate-200 text-slate-500 text-xs font-bold tracking-tight hover:bg-slate-50"
+                    className="w-full h-11 rounded-xl border-slate-200 text-slate-600 text-xs font-semibold tracking-tight hover:bg-slate-50"
                 >
                     <RefreshCw className="w-4 h-4 mr-2" /> Buat Resep Varian Lain
                 </Button>
@@ -492,10 +470,10 @@ export default function App() {
       )}
 
       {/* FOOTER APLIKASI (TIDAK MUNCUL SAAT DI-PRINT) */}
-      <div className="p-4 sm:p-5 bg-blue-50/50 rounded-2xl border border-blue-100 flex gap-3 opacity-75 mt-6 print:hidden">
-         <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-         <p className="text-[9px] sm:text-[10px] text-blue-600 font-medium leading-relaxed">
-            AI SAESTU memberikan rekomendasi berbasis standar kesehatan. Tetap konsultasikan dengan ahli gizi Posyandu Anda.
+      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex gap-2.5 mt-6 print:hidden">
+         <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+         <p className="text-xs text-slate-600 font-medium leading-relaxed">
+            Rekomendasi ini disusun berbasis panduan gizi dan ketersediaan pangan lokal. Selalu konsultasikan lebih lanjut dengan tenaga kesehatan di Puskesmas.
          </p>
       </div>
       

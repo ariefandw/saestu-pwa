@@ -25,11 +25,11 @@ export function PuskesmasBottomNav() {
             : pathname.startsWith(item.href);
           
           return (
-            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1 group relative transition-all duration-300 w-16">
-              <div className={cn("p-1.5 rounded-xl transition-all duration-300", isActive ? "bg-emerald-100/50 text-emerald-600" : "text-slate-400 hover:text-slate-500")}>
-                <item.icon className={cn("w-5 h-5", isActive ? "stroke-[2.5px]" : "stroke-[2px]")} />
+            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-0.5 group relative transition-all duration-200 w-16">
+              <div className={cn("p-1 rounded-lg transition-all", isActive ? "bg-slate-100 text-emerald-700" : "text-slate-400 hover:text-slate-600")}>
+                <item.icon className={cn("w-5 h-5", isActive ? "stroke-[2.2px]" : "stroke-[1.8px]")} />
               </div>
-              <span className={cn("text-[9px] font-bold transition-colors duration-300", isActive ? "text-emerald-700" : "text-slate-400")}>
+              <span className={cn("text-xs transition-colors", isActive ? "text-emerald-700 font-semibold" : "text-slate-500 font-normal")}>
                 {item.label}
               </span>
             </Link>

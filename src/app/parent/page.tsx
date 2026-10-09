@@ -95,37 +95,40 @@ export default function ParentDashboard() {
   return (
     <div className="p-4 sm:p-6 space-y-6 font-sans pb-28 max-w-md mx-auto">
       
-      {/* 1. SMART WELCOME SECTION */}
-      <div className="flex items-center justify-between mt-2 animate-in slide-in-from-top-4 duration-500">
-        <div className="space-y-0.5">
-            <h2 className="text-[11px] sm:text-xs font-black text-emerald-600 uppercase tracking-widest">{greeting},</h2>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
-              Bunda {userProfile?.name?.split(' ')[0]}!
+      {/* 1. HEADER SECTION */}
+      <div className="flex items-center justify-between mt-2">
+        <div className="space-y-1">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{greeting}</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Ibu {userProfile?.name?.split(' ')[0]}
             </h1>
         </div>
-        <div className="w-12 h-12 rounded-[1.2rem] bg-rose-50 flex items-center justify-center border border-rose-100 shadow-sm shrink-0 relative overflow-hidden group">
-            <Heart className="w-6 h-6 text-rose-500 fill-rose-500 animate-pulse" />
+        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200 text-slate-700 font-bold text-sm">
+            {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
         </div>
       </div>
 
-      {/* 2. EMPTY STATE (ENTERPRISE ONBOARDING) */}
+      {/* 2. EMPTY STATE (ONBOARDING) */}
       {!child && (
-        <Card className="p-6 border-dashed border-2 border-slate-200 bg-white rounded-[2rem] animate-in fade-in duration-700 mt-8">
-           <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-100">
-               <AlertCircle className="w-8 h-8 text-amber-500" />
+        <Card className="p-6 border-dashed border-2 border-slate-200 bg-white rounded-2xl mt-6">
+           <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-4 border border-slate-200">
+               <AlertCircle className="w-6 h-6 text-amber-600" />
            </div>
-           <h3 className="font-black text-slate-800 text-lg mb-2">Belum Terhubung</h3>
-           <p className="text-[13px] text-slate-500 leading-relaxed mb-6">
-             Data anak Bunda belum muncul di aplikasi. Silakan lakukan 2 langkah mudah ini:
+           <h3 className="font-bold text-slate-900 text-base mb-1.5">Belum Terhubung Data Anak</h3>
+           <p className="text-xs text-slate-600 leading-relaxed mb-5">
+             Data antropometri anak belum terdaftar pada akun ini. Lakukan sinkronisasi di Posyandu:
            </p>
-           <ul className="space-y-3">
-              <li className="flex gap-3 text-sm text-slate-700 font-medium bg-slate-50 p-3 rounded-xl">
-                 <span className="w-6 h-6 bg-white rounded-full flex items-center justify-center font-bold text-emerald-600 shrink-0 shadow-sm">1</span>
-                 Datang ke jadwal Posyandu terdekat.
+           <ul className="space-y-2.5">
+              <li className="flex gap-3 text-xs text-slate-700 font-medium bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                 <span className="w-5 h-5 bg-white border border-slate-200 rounded-md flex items-center justify-center font-bold text-slate-900 shrink-0 text-xs">1</span>
+                 Kunjungi jadwal Posyandu terdekat untuk penimbangan resmi.
               </li>
-              <li className="flex gap-3 text-sm text-slate-700 font-medium bg-slate-50 p-3 rounded-xl">
-                 <span className="w-6 h-6 bg-white rounded-full flex items-center justify-center font-bold text-emerald-600 shrink-0 shadow-sm">2</span>
-                 Beritahu Kader email Bunda: <br/> <span className="font-bold text-emerald-700 text-xs mt-1 block bg-emerald-100 px-2 py-1 rounded w-fit">{userProfile?.email}</span>
+              <li className="flex gap-3 text-xs text-slate-700 font-medium bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                 <span className="w-5 h-5 bg-white border border-slate-200 rounded-md flex items-center justify-center font-bold text-slate-900 shrink-0 text-xs">2</span>
+                 <div>
+                    Berikan alamat email akun kepada Kader:
+                    <span className="font-semibold text-slate-900 text-xs mt-1 block font-mono bg-white border border-slate-200 px-2 py-0.5 rounded w-fit">{userProfile?.email}</span>
+                 </div>
               </li>
            </ul>
         </Card>
@@ -133,136 +136,140 @@ export default function ParentDashboard() {
 
       {/* 3. DASHBOARD CONTENT */}
       {child && (
-        <div className="space-y-6 animate-in slide-in-from-bottom-6 duration-700">
+        <div className="space-y-5">
             
-            {/* A. KARTU IDENTITAS ANAK (PREMIUM GLASSMORPHISM) */}
-            <Card className="relative overflow-hidden bg-slate-900 border-0 p-5 sm:p-6 rounded-[2rem] shadow-xl text-white shadow-slate-200">
-                {/* Abstract Backgrounds */}
-                <div className="absolute top-0 right-0 p-6 opacity-5">
-                    <Baby className="w-40 h-40" />
-                </div>
-                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl"></div>
-                <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-blue-500/20 rounded-full blur-2xl"></div>
-                
-                <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-4">
-                        <Badge className="bg-white/10 text-emerald-300 border border-white/10 px-2.5 py-1 font-black text-[9px] uppercase tracking-widest backdrop-blur-sm">
-                            Profil Utama
-                        </Badge>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 bg-black/20 px-2 py-1 rounded-lg backdrop-blur-sm">
-                            <Clock className="w-3 h-3" /> {formatDate(lastMeasurement?.date)}
-                        </div>
+            {/* A. KARTU IDENTITAS ANAK (CLEAN CLINICAL CARD) */}
+            <Card className="bg-white border border-slate-200 p-5 sm:p-6 rounded-2xl shadow-xs text-slate-900">
+                <div className="flex justify-between items-start mb-3">
+                    <Badge variant="neutral" className="bg-slate-100 text-slate-700 border-slate-200 px-2.5 py-0.5 font-semibold text-xs">
+                        Profil Anak
+                    </Badge>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" /> 
+                        <span>Pemeriksaan: {formatDate(lastMeasurement?.date)}</span>
                     </div>
+                </div>
 
-                    <h2 className="text-3xl font-black mb-1 tracking-tight text-white">{child.name}</h2>
-                    <p className="text-slate-300 text-xs font-bold flex items-center gap-1.5 opacity-90">
-                        <span className={`${child.gender === 'L' ? 'text-blue-400' : 'text-rose-400'}`}>
-                            {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
-                        </span>
-                        <span className="text-slate-500">•</span>
-                        {lastMeasurement?.ageInMonths || 0} Bulan
-                    </p>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900">{child.name}</h2>
+                <p className="text-slate-500 text-xs font-medium flex items-center gap-2 mt-1">
+                    <span className="font-semibold text-slate-700">
+                        {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span>Usia {lastMeasurement?.ageInMonths || 0} Bulan</span>
+                </p>
 
-                    {/* Data Box (Glassmorphism) */}
-                    {(() => {
-                        let zHFA = lastMeasurement?.zScoreHFA;
-                        let zWFA = lastMeasurement?.zScoreWFA;
-                        let zWFH = lastMeasurement?.zScoreWFH;
+                {/* Data Box */}
+                {(() => {
+                    let zHFA = lastMeasurement?.zScoreHFA;
+                    let zWFA = lastMeasurement?.zScoreWFA;
+                    let zWFH = lastMeasurement?.zScoreWFH;
 
-                        if (lastMeasurement && (zHFA === undefined || zWFA === undefined)) {
-                            const assessed = calculateChildZScores({
-                                gender: child.gender,
-                                ageInMonths: lastMeasurement.ageInMonths,
-                                weight: lastMeasurement.weight,
-                                height: lastMeasurement.height,
-                            });
-                            zHFA = assessed.hfa.zScore;
-                            zWFA = assessed.wfa.zScore;
-                            zWFH = assessed.wfh.zScore;
-                        }
+                    if (lastMeasurement && (zHFA === undefined || zWFA === undefined)) {
+                        const assessed = calculateChildZScores({
+                            gender: child.gender,
+                            ageInMonths: lastMeasurement.ageInMonths,
+                            weight: lastMeasurement.weight,
+                            height: lastMeasurement.height,
+                        });
+                        zHFA = assessed.hfa.zScore;
+                        zWFA = assessed.wfa.zScore;
+                        zWFH = assessed.wfh.zScore;
+                    }
 
-                        const isStunted = zHFA !== undefined ? zHFA < -2 : false;
-                        const isUnderweight = zWFA !== undefined ? zWFA < -2 : false;
+                    const isStunted = zHFA !== undefined ? zHFA < -2 : false;
+                    const isUnderweight = zWFA !== undefined ? zWFA < -2 : false;
 
-                        return (
-                          <div className="mt-6 grid grid-cols-2 gap-3">
-                              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 relative overflow-hidden group">
-                                  <div className="absolute top-2 right-2 opacity-20 group-hover:scale-110 transition-transform"><Scale className="w-8 h-8" /></div>
-                                  <p className="text-[9px] sm:text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1 relative z-10">Berat Badan</p>
-                                  <p className="text-xl sm:text-2xl font-black relative z-10">{lastMeasurement?.weight || "-"} <span className="text-[10px] font-medium opacity-60">kg</span></p>
-                                  <div className="mt-2 relative z-10 flex flex-col gap-1">
-                                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md w-fit ${!isUnderweight ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}`}>
-                                          {!isUnderweight ? '✅ BB Normal' : '⚠️ BB Kurang'}
-                                      </span>
-                                      {zWFA !== undefined && (
-                                          <span className="text-[8px] font-bold text-slate-300 opacity-80">
-                                              Z: {zWFA > 0 ? `+${zWFA}` : zWFA} SD
-                                          </span>
-                                      )}
-                                  </div>
+                    return (
+                      <div className="mt-5 grid grid-cols-2 gap-3">
+                          <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
+                              <div className="flex items-center justify-between mb-1">
+                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Berat Badan</p>
+                                  <Scale className="w-4 h-4 text-slate-400" />
                               </div>
-                              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 relative overflow-hidden group">
-                                  <div className="absolute top-2 right-2 opacity-20 group-hover:scale-110 transition-transform"><Ruler className="w-8 h-8" /></div>
-                                  <p className="text-[9px] sm:text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 relative z-10">Tinggi Badan</p>
-                                  <p className="text-xl sm:text-2xl font-black relative z-10">{lastMeasurement?.height || "-"} <span className="text-[10px] font-medium opacity-60">cm</span></p>
-                                  <div className="mt-2 relative z-10 flex flex-col gap-1">
-                                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md w-fit ${!isStunted ? 'bg-blue-500/20 text-blue-300' : 'bg-rose-500/20 text-rose-300'}`}>
-                                          {!isStunted ? '✅ TB Normal' : '⚠️ Stunting'}
+                              <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                                  {lastMeasurement?.weight || "-"} <span className="text-xs font-normal text-slate-500">kg</span>
+                              </p>
+                              <div className="mt-2.5 flex flex-col gap-1">
+                                  <Badge 
+                                      variant={!isUnderweight ? 'success' : 'danger'}
+                                      className="text-xs font-semibold px-2 py-0.5 w-fit"
+                                  >
+                                      {!isUnderweight ? 'BB Normal' : 'BB Kurang'}
+                                  </Badge>
+                                  {zWFA !== undefined && (
+                                      <span className="text-xs text-slate-600 font-medium tabular-nums">
+                                          Z: {zWFA > 0 ? `+${zWFA}` : zWFA} SD
                                       </span>
-                                      {zHFA !== undefined && (
-                                          <span className="text-[8px] font-bold text-slate-300 opacity-80">
-                                              Z: {zHFA > 0 ? `+${zHFA}` : zHFA} SD
-                                          </span>
-                                      )}
-                                  </div>
+                                  )}
                               </div>
                           </div>
-                        );
-                    })()}
-                </div>
+
+                          <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
+                              <div className="flex items-center justify-between mb-1">
+                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tinggi Badan</p>
+                                  <Ruler className="w-4 h-4 text-slate-400" />
+                              </div>
+                              <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                                  {lastMeasurement?.height || "-"} <span className="text-xs font-normal text-slate-500">cm</span>
+                              </p>
+                              <div className="mt-2.5 flex flex-col gap-1">
+                                  <Badge 
+                                      variant={!isStunted ? 'success' : 'danger'}
+                                      className="text-xs font-semibold px-2 py-0.5 w-fit"
+                                  >
+                                      {!isStunted ? 'TB Normal' : 'Stunting'}
+                                  </Badge>
+                                  {zHFA !== undefined && (
+                                      <span className="text-xs text-slate-600 font-medium tabular-nums">
+                                          Z: {zHFA > 0 ? `+${zHFA}` : zHFA} SD
+                                      </span>
+                                  )}
+                              </div>
+                          </div>
+                      </div>
+                    );
+                })()}
             </Card>
 
-            {/* B. AI QUICK ACCESS (HERO ACTION) */}
+            {/* B. NUTRITION CONSULTATION QUICK ACCESS */}
             <Link href="/parent/nutrition" className="block group">
-                <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-[2rem] p-5 sm:p-6 text-white shadow-xl shadow-indigo-200 transition-all active:scale-95 relative overflow-hidden border border-indigo-500/50">
-                    <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[150%] bg-white/10 rotate-12 blur-xl"></div>
-                    <div className="absolute top-0 right-0 p-4 opacity-30 group-hover:rotate-12 transition-transform duration-500">
-                        <Sparkles className="w-20 h-20" />
-                    </div>
-                    
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div className="space-y-1.5 pr-4">
-                            <h3 className="text-base sm:text-lg font-black flex items-center gap-2 tracking-tight">
-                                <div className="bg-white/20 p-1.5 rounded-lg"><BrainCircuit className="w-4 h-4 text-amber-300" /></div>
-                                Tanya Ahli Gizi AI
+                <Card className="bg-slate-900 hover:bg-slate-800 text-white p-5 rounded-2xl border border-slate-800 shadow-xs transition-colors">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-1 pr-3">
+                            <h3 className="text-sm font-bold flex items-center gap-2">
+                                <BrainCircuit className="w-4 h-4 text-teal-400" />
+                                Konsultasi Gizi & Panduan MPASI
                             </h3>
-                            <p className="text-indigo-100 text-[11px] sm:text-xs leading-relaxed font-medium">Dapatkan resep MPASI lokal khusus untuk {child.name} hari ini.</p>
+                            <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                                Rekomendasi nutrisi klinis dan menu pangan lokal terukur sesuai status antropometri anak.
+                            </p>
                         </div>
-                        <div className="bg-white text-indigo-600 p-2 sm:p-2.5 rounded-full shadow-md shrink-0 group-hover:translate-x-1 transition-transform">
-                            <ArrowRight className="w-5 h-5" />
+                        <div className="p-2 rounded-lg bg-slate-800 text-white shrink-0 group-hover:bg-slate-700 transition-colors">
+                            <ArrowRight className="w-4 h-4" />
                         </div>
                     </div>
-                </div>
+                </Card>
             </Link>
 
-            {/* C. NEXT SCHEDULE CARD */}
-            <div className="space-y-3">
-               <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Jadwal Terdekat</h4>
-               <Card className="p-4 rounded-[1.5rem] border-slate-100 shadow-sm flex items-center gap-4 bg-white hover:border-emerald-200 transition-colors active:scale-95">
-                   <div className="bg-emerald-50 p-3 rounded-2xl text-center min-w-[3.5rem] border border-emerald-100 shrink-0">
-                       <span className="block text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Tgl</span>
-                       <span className="block text-xl font-black text-emerald-700 leading-none">15</span>
+            {/* C. JADWAL POSYANDU */}
+            <div className="space-y-2.5">
+               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Jadwal Posyandu</h4>
+               <Card className="p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 bg-white">
+                   <div className="bg-slate-100 p-2.5 rounded-xl text-center min-w-[3.5rem] border border-slate-200 shrink-0">
+                       <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Tgl</span>
+                       <span className="block text-xl font-bold text-slate-900 tabular-nums leading-none mt-0.5">15</span>
                    </div>
                    <div className="flex-1 min-w-0">
-                       <h4 className="font-black text-slate-800 text-sm">Penimbangan Posyandu</h4>
-                       <p className="text-[11px] text-slate-500 mt-0.5 truncate">Pastikan bawa buku KIA (opsional)</p>
-                       <div className="flex items-center gap-2 mt-2">
-                           <Badge variant="neutral" className="bg-slate-50 text-slate-500 text-[9px] py-0.5 border-slate-200">
+                       <h4 className="font-bold text-slate-900 text-sm">Penimbangan & Pengukuran Rutin</h4>
+                       <p className="text-xs text-slate-500 mt-0.5">Bawa Buku KIA saat berkunjung</p>
+                       <div className="flex items-center gap-2 mt-1.5">
+                           <Badge variant="neutral" className="bg-slate-50 text-slate-600 text-xs py-0.5 border-slate-200 font-medium">
                                <Clock className="w-3 h-3 mr-1 inline-block" /> 08:00 - Selesai
                            </Badge>
                        </div>
                    </div>
-                   <ChevronRight className="w-5 h-5 text-slate-300 shrink-0" />
+                   <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
                </Card>
             </div>
 

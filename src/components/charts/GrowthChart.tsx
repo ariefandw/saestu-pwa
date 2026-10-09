@@ -168,10 +168,10 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
                               </span>
                             </div>
                             {data.zLabel && (
-                              <p className="text-[10px] font-black uppercase text-slate-500 tracking-wider text-right">{data.zLabel}</p>
+                              <p className="text-xs font-semibold text-slate-500 text-right">{data.zLabel}</p>
                             )}
-                            <div className={`text-center mt-2 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${statusBg}`}>
-                              Velocity: {statusLabel}
+                            <div className={`text-center mt-2 px-2 py-1 rounded-md text-xs font-semibold uppercase tracking-wider ${statusBg}`}>
+                              Laju: {statusLabel}
                             </div>
                         </div>
                       </div>
@@ -215,9 +215,9 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
                 type="monotone" 
                 dataKey="value" 
                 stroke={lineColor} 
-                strokeWidth={3.5}
+                strokeWidth={3} 
                 isAnimationActive={true} 
-                activeDot={{ r: 7, strokeWidth: 0, fill: lineColor }}
+                activeDot={{ r: 6, strokeWidth: 0, fill: lineColor }}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
                   if (cx === undefined || cy === undefined || isNaN(Number(cx)) || isNaN(Number(cy))) {
@@ -229,7 +229,7 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
                   else if (payload.status === 'inadequate') fill = '#f43f5e';
                   else if (payload.status === 'excess') fill = '#f59e0b';
                   
-                  return <circle key={payload.fullDate} cx={Number(cx)} cy={Number(cy)} r={5} fill={fill} stroke="#fff" strokeWidth={2} />;
+                  return <circle key={payload.fullDate} cx={Number(cx)} cy={Number(cy)} r={4.5} fill={fill} stroke="#fff" strokeWidth={2} />;
                 }}
               />
             </LineChart>
@@ -238,22 +238,22 @@ export default function GrowthChart({ measurements, gender, type }: GrowthChartP
       </div>
 
       {/* Legend Standar Pertumbuhan KMS */}
-      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-4 pt-2 border-t border-slate-50">
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-4 pt-2 border-t border-slate-100">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-1 rounded" style={{ backgroundColor: lineColor }}></span>
-          <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider">Hasil Ukur</span>
+          <span className="text-xs font-semibold text-slate-700">Hasil Ukur</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-0.5 border-t border-dashed border-emerald-500"></span>
-          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">0 SD (Median)</span>
+          <span className="text-xs font-medium text-emerald-700">0 SD (Median)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-0.5 border-t border-dashed border-amber-500"></span>
-          <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider">-2 SD (Waspada)</span>
+          <span className="text-xs font-medium text-amber-700">-2 SD (Waspada)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-0.5 border-t border-dashed border-rose-500"></span>
-          <span className="text-[9px] font-bold text-rose-600 uppercase tracking-wider">-3 SD (Kritis)</span>
+          <span className="text-xs font-medium text-rose-700">-3 SD (Kritis)</span>
         </div>
       </div>
     </div>

@@ -235,21 +235,13 @@ function MeasurementForm() {
         <div className="flex-1 p-4 md:p-8">
             <div className="max-w-3xl mx-auto space-y-6">
                 
-                {/* Banner Edukasi */}
-                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
-                   <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                   <div>
-                      <p className="text-sm font-bold text-blue-900">Petunjuk Pengukuran</p>
-                      <p className="text-[11px] text-blue-700/80 font-medium leading-relaxed mt-1">Pastikan timbangan di angka 0.00 sebelum balita naik. Lepas alas kaki dan pakaian tebal balita untuk hasil deteksi AI yang akurat.</p>
-                   </div>
-                </div>
 
                 <form id="measurement-form" onSubmit={handleSubmit} className="space-y-6">
                     
                     {/* --- TANGGAL --- */}
-                    <Card className="p-6 border-slate-100 shadow-sm rounded-3xl bg-white">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-3">
-                            <Calendar className="w-4 h-4 text-teal-600" />
+                    <Card className="p-5 border-slate-200 shadow-xs rounded-2xl bg-white">
+                        <label className="text-xs font-semibold text-slate-600 flex items-center gap-2 mb-2.5">
+                            <Calendar className="w-4 h-4 text-slate-500" />
                             Tanggal Kunjungan Posyandu
                         </label>
                         <Input 
@@ -257,82 +249,107 @@ function MeasurementForm() {
                             required
                             value={formData.date}
                             onChange={(e) => setFormData({...formData, date: e.target.value})}
-                            className="h-14 text-base bg-slate-50 border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 transition-all font-bold text-slate-800"
+                            className="h-12 text-sm bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all font-semibold text-slate-800"
                         />
                     </Card>
 
                     {/* --- INPUT BB & TB (GRID) --- */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         
                         {/* BERAT BADAN */}
-                        <Card className="bg-white border-slate-100 shadow-sm rounded-3xl overflow-hidden p-0 hover:border-blue-200 transition-colors">
-                            <div className="p-6 space-y-5">
-                                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600"><Weight className="w-5 h-5" /></div>
-                                      <label className="text-sm font-black text-blue-700 uppercase tracking-widest">
-                                          Berat (BB)
-                                      </label>
+                        <Card className="bg-white border-slate-200 shadow-xs rounded-2xl p-5 space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
+                                        <Weight className="w-4 h-4" />
                                     </div>
-                                    <button type="button" onClick={() => openCamera('weight')} disabled={isProcessingImage} className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-xl flex items-center gap-2 shadow-md transition-all active:scale-95">
-                                      <ScanLine className="w-4 h-4 text-blue-400" /> <span className="text-[10px] font-black uppercase tracking-wider">Scan Angka</span>
-                                    </button>
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                            Berat Badan (BB)
+                                        </label>
+                                        <p className="text-xs text-slate-500">Timbangan terkalibrasi</p>
+                                    </div>
                                 </div>
-                                
-                                <div className="relative">
-                                    <Input 
-                                        type="number" step="0.01" placeholder="0.00" required
-                                        value={formData.weight}
-                                        onChange={(e) => setFormData({...formData, weight: e.target.value})}
-                                        className="pr-16 pl-6 text-3xl font-black h-20 bg-slate-50 border-slate-200 rounded-2xl text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
-                                    />
-                                    <Badge variant="neutral" className="absolute right-4 top-1/2 -translate-y-1/2 font-black bg-white border border-slate-200 text-slate-500 px-3 py-1.5 rounded-lg shadow-sm">kg</Badge>
-                                </div>
+                                <button 
+                                    type="button" 
+                                    onClick={() => openCamera('weight')} 
+                                    disabled={isProcessingImage} 
+                                    className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold shadow-2xs transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    <ScanLine className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Scan OCR</span>
+                                </button>
+                            </div>
+                            
+                            <div className="relative">
+                                <Input 
+                                    type="number" step="0.01" placeholder="0.00" required
+                                    value={formData.weight}
+                                    onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                                    className="pr-16 pl-4 text-2xl font-bold h-16 bg-white border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-slate-900/10 tabular-nums"
+                                />
+                                <Badge variant="neutral" className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-md text-xs">kg</Badge>
                             </div>
                         </Card>
 
                         {/* TINGGI BADAN */}
-                        <Card className="bg-white border-slate-100 shadow-sm rounded-3xl overflow-hidden p-0 hover:border-pink-200 transition-colors">
-                            <div className="p-6 space-y-5">
-                                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="p-2.5 bg-pink-50 rounded-xl text-pink-600"><Ruler className="w-5 h-5" /></div>
-                                      <label className="text-sm font-black text-pink-700 uppercase tracking-widest">
-                                          Tinggi (TB)
-                                      </label>
+                        <Card className="bg-white border-slate-200 shadow-xs rounded-2xl p-5 space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
+                                        <Ruler className="w-4 h-4" />
                                     </div>
-                                    <button type="button" onClick={() => openCamera('height')} disabled={isProcessingImage} className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-xl flex items-center gap-2 shadow-md transition-all active:scale-95">
-                                      <ScanLine className="w-4 h-4 text-pink-400" /> <span className="text-[10px] font-black uppercase tracking-wider">Scan Angka</span>
-                                    </button>
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                            Tinggi Badan (TB/PB)
+                                        </label>
+                                        <p className="text-xs text-slate-500">Infantometer / Stadiometer</p>
+                                    </div>
                                 </div>
+                                <button 
+                                    type="button" 
+                                    onClick={() => openCamera('height')} 
+                                    disabled={isProcessingImage} 
+                                    className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold shadow-2xs transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    <ScanLine className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Scan OCR</span>
+                                </button>
+                            </div>
 
-                                <div className="relative">
-                                    <Input 
-                                        type="number" step="0.1" placeholder="0.0" required
-                                        value={formData.height}
-                                        onChange={(e) => setFormData({...formData, height: e.target.value})}
-                                        className="pr-16 pl-6 text-3xl font-black h-20 bg-slate-50 border-slate-200 rounded-2xl text-slate-800 focus:bg-white focus:ring-2 focus:ring-pink-500/20"
-                                    />
-                                    <Badge variant="neutral" className="absolute right-4 top-1/2 -translate-y-1/2 font-black bg-white border border-slate-200 text-slate-500 px-3 py-1.5 rounded-lg shadow-sm">cm</Badge>
-                                </div>
+                            <div className="relative">
+                                <Input 
+                                    type="number" step="0.1" placeholder="0.0" required
+                                    value={formData.height}
+                                    onChange={(e) => setFormData({...formData, height: e.target.value})}
+                                    className="pr-16 pl-4 text-2xl font-bold h-16 bg-white border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-slate-900/10 tabular-nums"
+                                />
+                                <Badge variant="neutral" className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-md text-xs">cm</Badge>
                             </div>
                         </Card>
                     </div>
 
                     {/* --- LINGKAR KEPALA --- */}
-                    <Card className="bg-white border-slate-100 shadow-sm rounded-3xl p-6">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-3">
-                            <Brain className="w-4 h-4 text-purple-500" />
-                            Lingkar Kepala (Opsional)
-                        </label>
+                    <Card className="bg-white border-slate-200 shadow-xs rounded-2xl p-5 space-y-3">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
+                                <Brain className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                    Lingkar Kepala (Opsional)
+                                </label>
+                                <p className="text-xs text-slate-500">Pita ukur non-elastis</p>
+                            </div>
+                        </div>
                         <div className="relative">
                             <Input 
                                 type="number" step="0.1" placeholder="0.0"
                                 value={formData.headCircumference}
                                 onChange={(e) => setFormData({...formData, headCircumference: e.target.value})}
-                                className="pr-16 pl-6 h-16 text-xl font-black bg-slate-50 border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 text-slate-800"
+                                className="pr-16 pl-4 h-14 text-xl font-bold bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900/10 text-slate-900 tabular-nums"
                             />
-                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">CM</span>
+                            <Badge variant="neutral" className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-md text-xs">cm</Badge>
                         </div>
                     </Card>
 
@@ -361,23 +378,23 @@ function MeasurementForm() {
 
                         return (
                             <Card className={cn(
-                                "p-6 rounded-3xl border-2 transition-all shadow-sm animate-in fade-in slide-in-from-bottom-2",
-                                isAlert ? "bg-rose-50/50 border-rose-200" : "bg-emerald-50/50 border-emerald-200"
+                                "p-5 rounded-2xl border transition-all shadow-xs",
+                                isAlert ? "bg-rose-50/40 border-rose-200" : "bg-emerald-50/40 border-emerald-200"
                             )}>
                                 <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-4">
                                     <div className="flex items-center gap-2">
                                         {isAlert ? (
-                                            <AlertTriangle className="w-5 h-5 text-rose-500" />
+                                            <AlertTriangle className="w-4 h-4 text-rose-600" />
                                         ) : (
-                                            <CheckCircle className="w-5 h-5 text-emerald-600" />
+                                            <CheckCircle className="w-4 h-4 text-emerald-600" />
                                         )}
-                                        <p className="text-xs font-black uppercase tracking-wider text-slate-800">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-900">
                                             Analisis Z-Score Seketika (WHO / Kemenkes)
                                         </p>
                                     </div>
                                     <Badge 
                                         variant={isAlert ? "danger" : "success"}
-                                        className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1"
+                                        className="text-xs font-semibold px-2.5 py-0.5"
                                     >
                                         Usia {ageInMonths} Bulan
                                     </Badge>
@@ -385,42 +402,42 @@ function MeasurementForm() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {/* TB/U - Stunting */}
-                                    <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">TB/U (Stunting)</p>
-                                        <p className={cn("text-xl font-black", assessment.hfa.zScore < -2 ? "text-rose-600" : "text-slate-800")}>
-                                            {assessment.hfa.zScore > 0 ? `+${assessment.hfa.zScore}` : assessment.hfa.zScore} <span className="text-xs font-bold opacity-60">SD</span>
+                                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+                                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">TB/U (Stunting)</p>
+                                        <p className={cn("text-xl font-bold tabular-nums", assessment.hfa.zScore < -2 ? "text-rose-600" : "text-slate-900")}>
+                                            {assessment.hfa.zScore > 0 ? `+${assessment.hfa.zScore}` : assessment.hfa.zScore} <span className="text-xs font-normal text-slate-500">SD</span>
                                         </p>
-                                        <p className={cn("text-[10px] font-black uppercase mt-1", assessment.hfa.zScore < -2 ? "text-rose-600" : "text-slate-600")}>
+                                        <p className={cn("text-xs font-medium mt-1", assessment.hfa.zScore < -2 ? "text-rose-700" : "text-slate-600")}>
                                             {assessment.hfa.label}
                                         </p>
                                     </div>
 
                                     {/* BB/U - Underweight */}
-                                    <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">BB/U (Berat)</p>
-                                        <p className={cn("text-xl font-black", assessment.wfa.zScore < -2 ? "text-amber-600" : "text-slate-800")}>
-                                            {assessment.wfa.zScore > 0 ? `+${assessment.wfa.zScore}` : assessment.wfa.zScore} <span className="text-xs font-bold opacity-60">SD</span>
+                                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+                                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">BB/U (Berat)</p>
+                                        <p className={cn("text-xl font-bold tabular-nums", assessment.wfa.zScore < -2 ? "text-amber-600" : "text-slate-900")}>
+                                            {assessment.wfa.zScore > 0 ? `+${assessment.wfa.zScore}` : assessment.wfa.zScore} <span className="text-xs font-normal text-slate-500">SD</span>
                                         </p>
-                                        <p className={cn("text-[10px] font-black uppercase mt-1", assessment.wfa.zScore < -2 ? "text-amber-600" : "text-slate-600")}>
+                                        <p className={cn("text-xs font-medium mt-1", assessment.wfa.zScore < -2 ? "text-amber-700" : "text-slate-600")}>
                                             {assessment.wfa.label}
                                         </p>
                                     </div>
 
                                     {/* BB/TB - Wasting */}
-                                    <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">BB/TB (Gizi/Wasting)</p>
-                                        <p className={cn("text-xl font-black", assessment.wfh.zScore < -2 ? "text-rose-600" : "text-slate-800")}>
-                                            {assessment.wfh.zScore > 0 ? `+${assessment.wfh.zScore}` : assessment.wfh.zScore} <span className="text-xs font-bold opacity-60">SD</span>
+                                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+                                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">BB/TB (Gizi/Wasting)</p>
+                                        <p className={cn("text-xl font-bold tabular-nums", assessment.wfh.zScore < -2 ? "text-rose-600" : "text-slate-900")}>
+                                            {assessment.wfh.zScore > 0 ? `+${assessment.wfh.zScore}` : assessment.wfh.zScore} <span className="text-xs font-normal text-slate-500">SD</span>
                                         </p>
-                                        <p className={cn("text-[10px] font-black uppercase mt-1", assessment.wfh.zScore < -2 ? "text-rose-600" : "text-slate-600")}>
+                                        <p className={cn("text-xs font-medium mt-1", assessment.wfh.zScore < -2 ? "text-rose-700" : "text-slate-600")}>
                                             {assessment.wfh.label}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="mt-3 pt-3 border-t border-slate-200/50 flex items-center justify-between">
-                                    <span className="text-[11px] font-bold text-slate-600">Kesimpulan Klinis:</span>
-                                    <span className={cn("text-xs font-black uppercase tracking-wide", isAlert ? "text-rose-700" : "text-emerald-700")}>
+                                <div className="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                                    <span className="text-xs text-slate-600 font-medium">Kesimpulan Klinis:</span>
+                                    <span className={cn("text-xs font-bold uppercase tracking-wide", isAlert ? "text-rose-700" : "text-emerald-700")}>
                                         {assessment.summaryDiagnosis}
                                     </span>
                                 </div>
@@ -429,13 +446,13 @@ function MeasurementForm() {
                     })()}
 
                     {/* --- DESKTOP SUBMIT BUTTON --- */}
-                    <div className="hidden md:flex justify-end pt-4">
+                    <div className="hidden md:flex justify-end pt-2">
                         <Button 
                             type="submit" 
-                            className="h-16 px-10 text-lg font-black shadow-xl shadow-teal-500/30 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl transition-all active:scale-95" 
+                            className="h-12 px-8 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs transition-all active:scale-95" 
                             isLoading={isSubmitting}
                         >
-                            <Save className="mr-2 h-6 w-6" />
+                            <Save className="mr-2 h-4 w-4" />
                             Simpan & Hitung Z-Score
                         </Button>
                     </div>
@@ -444,15 +461,15 @@ function MeasurementForm() {
         </div>
 
         {/* --- STICKY ACTION BUTTON (FIXED FOR MOBILE ONLY) --- */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-slate-200/50 z-30 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 pb-safe shadow-lg">
             <div className="max-w-2xl mx-auto">
                 <Button 
                     type="submit" 
                     form="measurement-form"
-                    className="w-full h-14 text-base font-black shadow-xl shadow-teal-500/30 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl transition-all active:scale-[0.97]" 
+                    className="w-full h-12 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs transition-all active:scale-[0.98]" 
                     isLoading={isSubmitting}
                 >
-                    <Save className="mr-2 h-5 w-5" />
+                    <Save className="mr-2 h-4 w-4" />
                     Simpan & Analisis
                 </Button>
             </div>

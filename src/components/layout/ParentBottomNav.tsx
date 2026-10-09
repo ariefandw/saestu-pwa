@@ -27,12 +27,12 @@ export function ParentBottomNav() {
           // Render khusus untuk tombol tengah (AI Gizi) -> Floating Action Button (FAB)
           if (item.isSpecial) {
             return (
-              <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center -mt-8 group relative z-10">
-                <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center shadow-xl shadow-teal-500/30 text-white group-active:scale-95 transition-transform">
-                  <item.icon className={cn("w-6 h-6", isActive && "animate-pulse")} />
+              <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center -mt-6 group relative z-10">
+                <div className="w-12 h-12 bg-teal-600 rounded-full flex items-center justify-center shadow-md text-white group-active:scale-95 transition-transform">
+                  <item.icon className="w-5 h-5" />
                 </div>
                 <span className={cn(
-                  "text-[10px] font-black mt-1.5 transition-colors",
+                  "text-xs font-semibold mt-1 transition-colors",
                   isActive ? "text-teal-700" : "text-slate-500"
                 )}>{item.label}</span>
               </Link>
@@ -44,18 +44,17 @@ export function ParentBottomNav() {
             <Link 
               key={item.href} 
               href={item.href}
-              className="flex flex-col items-center gap-1 group relative transition-all duration-300 w-12"
+              className="flex flex-col items-center gap-0.5 group relative transition-all duration-200 w-14"
             >
               <div className={cn(
-                "p-1.5 rounded-xl transition-all duration-300",
-                isActive ? "text-teal-600" : "text-slate-400 hover:text-slate-500"
+                "p-1 rounded-lg transition-all",
+                isActive ? "text-teal-700" : "text-slate-400 hover:text-slate-600"
               )}>
-                {/* Efek icon "terisi" saat aktif */}
-                <item.icon className={cn("w-[22px] h-[22px]", isActive ? "stroke-[2.5px] fill-teal-50" : "stroke-[2px]")} />
+                <item.icon className={cn("w-5 h-5", isActive ? "stroke-[2.2px]" : "stroke-[1.8px]")} />
               </div>
               <span className={cn(
-                "text-[9px] font-bold transition-colors duration-300",
-                isActive ? "text-teal-700" : "text-slate-400"
+                "text-xs transition-colors",
+                isActive ? "text-teal-700 font-semibold" : "text-slate-500 font-normal"
               )}>
                 {item.label}
               </span>
