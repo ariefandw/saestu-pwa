@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { Activity, AlertTriangle, Fingerprint, ChevronRight, ChevronDown, Loader2, Sparkles, KeyRound } from "lucide-react";
+import { 
+  Activity, 
+  AlertTriangle, 
+  Fingerprint, 
+  ChevronRight, 
+  ChevronDown, 
+  Loader2, 
+  ShieldCheck, 
+  Building2, 
+  HeartHandshake, 
+  Users 
+} from "lucide-react";
 import Link from "next/link";
 
 // [NEW IMPORT]: Ambil AuthContext untuk mengecek apakah user sudah login
@@ -14,10 +25,38 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
 const DEMO_ACCOUNTS = [
-  { label: "Admin Master", email: "admin@saestu.com", password: "password123", role: "Master" },
-  { label: "Petugas Puskesmas", email: "puskesmas@saestu.com", password: "password123", role: "Puskesmas" },
-  { label: "Kader Posyandu", email: "kader@saestu.com", password: "password123", role: "Kader" },
-  { label: "Orang Tua / Ibu", email: "parent@saestu.com", password: "password123", role: "Orang Tua" },
+  { 
+    role: "Admin Master", 
+    email: "admin@saestu.com", 
+    password: "password123", 
+    desc: "Akses pusat sistem & konfigurasi", 
+    icon: ShieldCheck, 
+    badgeColor: "bg-purple-100 text-purple-700 border-purple-200" 
+  },
+  { 
+    role: "Petugas Puskesmas", 
+    email: "puskesmas@saestu.com", 
+    password: "password123", 
+    desc: "Monitoring wilayah & Posyandu", 
+    icon: Building2, 
+    badgeColor: "bg-blue-100 text-blue-700 border-blue-200" 
+  },
+  { 
+    role: "Kader Posyandu", 
+    email: "kader@saestu.com", 
+    password: "password123", 
+    desc: "Input balita & antropometri", 
+    icon: HeartHandshake, 
+    badgeColor: "bg-emerald-100 text-emerald-700 border-emerald-200" 
+  },
+  { 
+    role: "Orang Tua / Ibu", 
+    email: "parent@saestu.com", 
+    password: "password123", 
+    desc: "Buku KMS digital & nutrisi anak", 
+    icon: Users, 
+    badgeColor: "bg-rose-100 text-rose-700 border-rose-200" 
+  },
 ];
 
 export default function LoginPage() {
@@ -25,8 +64,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedDemoRole, setSelectedDemoRole] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Close dropdown saat klik di luar
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // [NEW LOGIC]: Cek status login saat ini
   const { userProfile, loading: authLoading } = useAuth();
@@ -128,40 +179,64 @@ export default function LoginPage() {
                   {/* Field Email */}
                   <div>
                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email</label>
-                     <div className="relative">
+                     <div className="relative" ref={dropdownRef}>
                         <Input 
                            type="email" 
                            placeholder="Masukkan alamat email" 
                            value={email}
                            onChange={(e) => setEmail(e.target.value)}
                            required
-                           className="h-14 bg-slate-50 border-slate-200 focus:bg-white text-sm rounded-2xl pr-12 w-full"
+                           className="h-14 bg-slate-50 border-slate-200 focus:bg-white text-sm rounded-2xl pr-12 w-full text-slate-900 font-medium placeholder:text-slate-400"
                         />
                         {/* Tombol Chevron Down Murni */}
-                        <div className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer">
-                           <ChevronDown className="w-5 h-5 pointer-events-none" />
-                           <select 
-                              aria-label="Pilih akun demo"
-                              value=""
-                              onChange={(e) => {
-                                 const selected = e.target.value;
-                                 const acc = DEMO_ACCOUNTS.find(a => a.email === selected);
-                                 if (acc) {
-                                    setEmail(acc.email);
-                                    setPassword(acc.password);
-                                    setError("");
-                                 }
-                              }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                           >
-                              <option value="" disabled>Pilih Akun Demo...</option>
-                              {DEMO_ACCOUNTS.map((acc) => (
-                                 <option key={acc.email} value={acc.email}>
-                                    {acc.role}: {acc.email}
-                                 </option>
-                              ))}
-                           </select>
-                        </div>
+                        <button 
+                           type="button"
+                           aria-label="Pilih akun demo"
+                           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                           className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-400 hover:text-teal-600 transition-colors focus:outline-none"
+                        >
+                           <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-teal-600' : ''}`} />
+                        </button>
+
+                        {/* Custom Modern Dropdown Menu */}
+                        {isDropdownOpen && (
+                           <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 space-y-1.5 animate-in fade-in zoom-in-95 duration-150">
+                              <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                 Pilih Akun Demo Instan
+                              </div>
+                              {DEMO_ACCOUNTS.map((acc) => {
+                                 const IconComponent = acc.icon;
+                                 return (
+                                    <button
+                                       key={acc.email}
+                                       type="button"
+                                       onClick={() => {
+                                          setEmail(acc.email);
+                                          setPassword(acc.password);
+                                          setError("");
+                                          setIsDropdownOpen(false);
+                                       }}
+                                       className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left hover:bg-slate-50 transition-colors group"
+                                    >
+                                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${acc.badgeColor}`}>
+                                          <IconComponent className="w-4 h-4" />
+                                       </div>
+                                       <div className="flex-1 min-w-0">
+                                          <div className="flex items-center justify-between">
+                                             <p className="text-xs font-bold text-slate-900 group-hover:text-teal-700">
+                                                {acc.role}
+                                             </p>
+                                          </div>
+                                          <p className="text-[11px] font-mono text-slate-600 truncate mt-0.5">
+                                             {acc.email}
+                                          </p>
+                                       </div>
+                                       <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-teal-600 shrink-0" />
+                                    </button>
+                                 );
+                              })}
+                           </div>
+                        )}
                      </div>
                   </div>
 
