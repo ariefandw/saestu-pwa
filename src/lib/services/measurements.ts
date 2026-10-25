@@ -39,12 +39,10 @@ export const addMeasurement = async (data: CreateMeasurementInput) => {
     const childDob = child.dob instanceof Timestamp ? child.dob.toDate() : new Date(child.dob);
     const currentMeasDate = new Date(data.date); 
 
+    // Query pengukuran anak sebelumnya tanpa composite index
     const q = query(
       collection(db, COLLECTION_NAME),
-      where("childId", "==", data.childId),
-      where("date", "<", Timestamp.fromDate(currentMeasDate)), 
-      orderBy("date", "desc"),
-      limit(1)
+      where("childId", "==", data.childId)
     );
     
     const prevSnap = await getDocs(q);
@@ -53,8 +51,20 @@ export const addMeasurement = async (data: CreateMeasurementInput) => {
     let prevWeight: number;
     let prevHeight: number;
 
-    if (!prevSnap.empty) {
-      const prevData = prevSnap.docs[0].data() as Measurement;
+    const previousMeasurements = prevSnap.docs
+      .map(d => ({ id: d.id, ...d.data() } as Measurement))
+      .filter(m => {
+        const mDate = m.date instanceof Timestamp ? m.date.toDate() : new Date(m.date);
+        return mDate.getTime() < currentMeasDate.getTime();
+      })
+      .sort((a, b) => {
+        const timeA = a.date instanceof Timestamp ? a.date.toMillis() : new Date(a.date).getTime();
+        const timeB = b.date instanceof Timestamp ? b.date.toMillis() : new Date(b.date).getTime();
+        return timeB - timeA;
+      });
+
+    if (previousMeasurements.length > 0) {
+      const prevData = previousMeasurements[0];
       prevDate = prevData.date instanceof Timestamp ? prevData.date.toDate() : new Date(prevData.date);
       prevWeight = prevData.weight;
       prevHeight = prevData.height;
@@ -173,12 +183,11 @@ export const getMeasurementsByChild = async (childId: string): Promise<Measureme
   try {
     const q = query(
       collection(db, COLLECTION_NAME),
-      where("childId", "==", childId),
-      orderBy("date", "desc")
+      where("childId", "==", childId)
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => {
+    const list = querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -187,6 +196,13 @@ export const getMeasurementsByChild = async (childId: string): Promise<Measureme
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date()
       } as Measurement;
     });
+
+    list.sort((a, b) => {
+      const timeA = a.date instanceof Date ? a.date.getTime() : (a.date as any)?.toMillis ? (a.date as any).toMillis() : 0;
+      const timeB = b.date instanceof Date ? b.date.getTime() : (b.date as any)?.toMillis ? (b.date as any).toMillis() : 0;
+      return timeB - timeA;
+    });
+    return list;
   } catch (error) {
     console.error("Error fetching measurements:", error);
     throw error;
