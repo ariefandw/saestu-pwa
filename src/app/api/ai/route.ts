@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-// Inisialisasi OpenAI Client dengan endpoint Groq
-// (Bisa diganti ke Kimi/Moonshot cukup dengan mengubah baseURL dan apiKey)
-const openai = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1", 
-  apiKey: process.env.GROQ_API_KEY, // Pastikan ada di .env.local
-});
+export const dynamic = "force-dynamic";
 
 interface Payload {
   // Tambahkan 'taskType' agar kedepannya rute ini bisa dipakai banyak fitur
@@ -68,6 +63,16 @@ export async function POST(req: Request) {
       2. Jika weightStatus "adequate" (Gizi Baik), rekomendasikan menu gizi seimbang biasa.
       3. Hanya rekomendasikan bahan makanan yang ADA di [DATABASE MAKANAN LOKAL] di atas.
     `;
+
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "GROQ_API_KEY belum dikonfigurasi di .env" }, { status: 500 });
+    }
+
+    const openai = new OpenAI({
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey: apiKey,
+    });
 
     // 3. MENEMBAK API MENGGUNAKAN STANDAR OPENAI
     // Menggunakan Llama 3.3 70B (Generasi terbaru, tercepat, dan bebas error 'decommissioned')
