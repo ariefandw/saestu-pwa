@@ -125,36 +125,26 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-6">
                <div className="space-y-4">
                   
-                  {/* Field Email dengan Demo Selector Compact */}
+                  {/* Field Email */}
                   <div>
-                     <div className="flex justify-between items-center mb-2 ml-1">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Email</label>
-                        <span className="text-[10px] font-bold text-teal-600 flex items-center gap-1">
-                           <Sparkles className="w-3 h-3 text-teal-500" /> Mode Demo
-                        </span>
-                     </div>
-                     <div className="relative flex items-center rounded-2xl border border-slate-200 bg-slate-50 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:bg-white transition-all overflow-hidden shadow-xs">
-                        <input 
+                     <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email</label>
+                     <div className="relative">
+                        <Input 
                            type="email" 
                            placeholder="Masukkan alamat email" 
                            value={email}
-                           onChange={(e) => {
-                              setEmail(e.target.value);
-                              setSelectedDemoRole("");
-                           }}
+                           onChange={(e) => setEmail(e.target.value)}
                            required
-                           className="flex-1 h-14 pl-4 pr-2 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                           className="h-14 bg-slate-50 border-slate-200 focus:bg-white text-sm rounded-2xl pr-12 w-full"
                         />
-                        
-                        {/* Compact Dropdown Trigger Icon */}
-                        <div className="relative h-14 w-12 flex items-center justify-center border-l border-slate-200 bg-slate-100/70 hover:bg-slate-200/70 text-slate-500 hover:text-teal-700 transition-colors shrink-0 cursor-pointer" title="Pilih Akun Demo Instan">
-                           <ChevronDown className="w-4 h-4 pointer-events-none transition-transform" />
+                        {/* Tombol Chevron Down Murni */}
+                        <div className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer">
+                           <ChevronDown className="w-5 h-5 pointer-events-none" />
                            <select 
-                              aria-label="Pilih akun demo instan"
-                              value={selectedDemoRole}
+                              aria-label="Pilih akun demo"
+                              value=""
                               onChange={(e) => {
                                  const selected = e.target.value;
-                                 setSelectedDemoRole(selected);
                                  const acc = DEMO_ACCOUNTS.find(a => a.email === selected);
                                  if (acc) {
                                     setEmail(acc.email);
@@ -162,12 +152,12 @@ export default function LoginPage() {
                                     setError("");
                                  }
                               }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-sm"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                            >
-                              <option value="" disabled>-- Pilih Akun Demo --</option>
+                              <option value="" disabled>Pilih Akun Demo...</option>
                               {DEMO_ACCOUNTS.map((acc) => (
-                                 <option key={acc.email} value={acc.email} className="text-slate-800 py-1">
-                                    {acc.role} ({acc.email})
+                                 <option key={acc.email} value={acc.email}>
+                                    {acc.role}: {acc.email}
                                  </option>
                               ))}
                            </select>
