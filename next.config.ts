@@ -17,6 +17,7 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   /* Menambahkan opsi turbopack kosong untuk memberi tahu Next.js 
      bahwa kita secara sadar menggunakan plugin berbasis Webpack.
      Ini akan menghilangkan error saat menjalankan 'npm run dev'.
