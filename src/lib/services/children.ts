@@ -49,13 +49,12 @@ export const getChildrenByPosyandu = async (posyanduId: string): Promise<Child[]
   try {
     const q = query(
       collection(db, COLLECTION_NAME), 
-      where("posyanduId", "==", posyanduId),
-      orderBy("name", "asc") 
+      where("posyanduId", "==", posyanduId)
     );
     
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map((doc) => {
+    const list = querySnapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -63,6 +62,9 @@ export const getChildrenByPosyandu = async (posyanduId: string): Promise<Child[]
         dob: data.dob?.toDate ? data.dob.toDate() : new Date(data.dob),
       } as Child;
     });
+
+    list.sort((a, b) => a.name.localeCompare(b.name));
+    return list;
 
   } catch (error) {
     console.error("Error fetching children:", error);

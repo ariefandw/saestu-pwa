@@ -42,11 +42,16 @@ export const getParentsByPosyandu = async (posyanduId: string): Promise<UserProf
     const q = query(
       collection(db, COLLECTION_NAME), 
       where("posyanduId", "==", posyanduId),
-      where("role", "==", "parent"),
-      orderBy("createdAt", "desc")
+      where("role", "==", "parent")
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => doc.data() as UserProfile);
+    const list = querySnapshot.docs.map((doc) => doc.data() as UserProfile);
+    list.sort((a, b) => {
+      const timeA = a.createdAt instanceof Date ? a.createdAt.getTime() : (a.createdAt as any)?.toMillis ? (a.createdAt as any).toMillis() : 0;
+      const timeB = b.createdAt instanceof Date ? b.createdAt.getTime() : (b.createdAt as any)?.toMillis ? (b.createdAt as any).toMillis() : 0;
+      return timeB - timeA;
+    });
+    return list;
   } catch (error) {
     console.error("Error fetching parents:", error);
     throw error;

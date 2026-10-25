@@ -59,7 +59,7 @@ async function seed() {
   // 0. BERSIHKAN DATA SEBELUMNYA (KECUALI USERS KARENA AUTH SUDAH TERIKAT)
   const collectionsToClean = [
     "puskesmas",
-    "posyandu",
+    "posyandus",
     "children",
     "measurements",
     "master_foods",
@@ -96,7 +96,7 @@ async function seed() {
   // 2. DATA POSYANDU (3 Posyandu di bawah Puskesmas)
   console.log("🏠 2. Membuat Data Posyandu (3 Posyandu)...");
   const posyanduMelatiId = "posyandu-melati-01";
-  await setDoc(doc(db, "posyandu", posyanduMelatiId), {
+  await setDoc(doc(db, "posyandus", posyanduMelatiId), {
     id: posyanduMelatiId,
     name: "Posyandu Melati 01",
     village: "Kelurahan Sukagalih",
@@ -107,7 +107,7 @@ async function seed() {
   });
 
   const posyanduMawarId = "posyandu-mawar-02";
-  await setDoc(doc(db, "posyandu", posyanduMawarId), {
+  await setDoc(doc(db, "posyandus", posyanduMawarId), {
     id: posyanduMawarId,
     name: "Posyandu Mawar 02",
     village: "Kelurahan Pasteur",
@@ -118,7 +118,7 @@ async function seed() {
   });
 
   const posyanduAnggrekId = "posyandu-anggrek-03";
-  await setDoc(doc(db, "posyandu", posyanduAnggrekId), {
+  await setDoc(doc(db, "posyandus", posyanduAnggrekId), {
     id: posyanduAnggrekId,
     name: "Posyandu Anggrek 01",
     village: "Kelurahan Dago",

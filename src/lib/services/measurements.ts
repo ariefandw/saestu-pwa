@@ -143,12 +143,11 @@ export const getMeasurementsByPosyandu = async (posyanduId: string): Promise<Mea
   try {
     const q = query(
       collection(db, COLLECTION_NAME),
-      where("posyanduId", "==", posyanduId),
-      orderBy("date", "desc")
+      where("posyanduId", "==", posyanduId)
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => {
+    const list = querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -157,6 +156,9 @@ export const getMeasurementsByPosyandu = async (posyanduId: string): Promise<Mea
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date()
       } as Measurement;
     });
+
+    list.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return list;
   } catch (error) {
     console.error("Error fetching measurements by posyandu:", error);
     throw error;
