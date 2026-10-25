@@ -157,7 +157,11 @@ export const getMeasurementsByPosyandu = async (posyanduId: string): Promise<Mea
       } as Measurement;
     });
 
-    list.sort((a, b) => b.date.getTime() - a.date.getTime());
+    list.sort((a, b) => {
+      const timeA = a.date instanceof Date ? a.date.getTime() : (a.date as any)?.toMillis ? (a.date as any).toMillis() : 0;
+      const timeB = b.date instanceof Date ? b.date.getTime() : (b.date as any)?.toMillis ? (b.date as any).toMillis() : 0;
+      return timeB - timeA;
+    });
     return list;
   } catch (error) {
     console.error("Error fetching measurements by posyandu:", error);
