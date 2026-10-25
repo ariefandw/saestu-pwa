@@ -10,7 +10,7 @@ import { addMeasurement } from "@/lib/services/measurements";
 import { calculateChildZScores } from "@/lib/who-standards";
 import { differenceInMonths } from "date-fns";
 import { 
-  ArrowLeft, Save, Calendar, Weight, Ruler, Camera, X, RefreshCw, Brain, ScanLine, AlertCircle, CheckCircle, AlertTriangle
+  ArrowLeft, Save, Calendar, Weight, Ruler, Camera, X, RefreshCw, Brain, ScanLine, AlertCircle, CheckCircle, AlertTriangle, Wifi, Cpu
 } from "lucide-react";
 
 // UI Components
@@ -65,6 +65,41 @@ function MeasurementForm() {
     height: "",
     headCircumference: "",
   });
+
+  const [isSyncingIoT, setIsSyncingIoT] = useState(false);
+
+  const syncWithIoTScale = async () => {
+    setIsSyncingIoT(true);
+    try {
+      const edgeUrl = process.env.NEXT_PUBLIC_EDGE_SCALE_URL || "https://scale.technosmart.id";
+      const res = await fetch(`${edgeUrl}/api/v1/measurements?limit=1`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Gagal mengambil data dari Timbangan IoT");
+      const list = await res.json();
+      if (!Array.isArray(list) || list.length === 0) {
+        showToast("Belum ada data dari timbangan IoT. Silakan timbang balita.", "info");
+        return;
+      }
+      const latest = list[0];
+      const weightKg = latest.weight_grams ? (latest.weight_grams / 1000).toFixed(2) : "";
+      const lengthCm = latest.length_cm ? latest.length_cm.toFixed(1) : "";
+
+      setFormData(prev => ({
+        ...prev,
+        ...(weightKg ? { weight: weightKg } : {}),
+        ...(lengthCm && parseFloat(lengthCm) > 0 ? { height: lengthCm } : {}),
+      }));
+
+      showToast(`Data IoT diterima: ${weightKg || '-'} kg, ${lengthCm || '-'} cm (${latest.device_id})`, "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast("Koneksi ke Timbangan IoT gagal. Pastikan terhubung internet.", "error");
+    } finally {
+      setIsSyncingIoT(false);
+    }
+  };
+
 
   // Fetch data anak
   useEffect(() => {
@@ -238,6 +273,34 @@ function MeasurementForm() {
 
                 <form id="measurement-form" onSubmit={handleSubmit} className="space-y-6">
                     
+                    {/* --- IOT SCALE INTEGRATION BANNER --- */}
+                    <Card className="p-4 sm:p-5 border-teal-200/80 shadow-xs rounded-2xl bg-gradient-to-r from-teal-50/70 via-white to-emerald-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-teal-600 text-white rounded-xl shadow-xs">
+                                <Cpu className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-sm font-bold text-slate-900">Timbangan & Kamera IoT Saestu</h4>
+                                    <span className="flex h-2 w-2 relative">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500">Ambil data berat (g) dan panjang badan otomatis dari hardware posyandu.</p>
+                            </div>
+                        </div>
+                        <Button
+                            type="button"
+                            onClick={syncWithIoTScale}
+                            disabled={isSyncingIoT}
+                            className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-60"
+                        >
+                            <Wifi className={cn("w-4 h-4", isSyncingIoT && "animate-pulse")} />
+                            <span>{isSyncingIoT ? "Sinkronisasi..." : "Tarik Data IoT"}</span>
+                        </Button>
+                    </Card>
+
                     {/* --- TANGGAL --- */}
                     <Card className="p-5 border-slate-200 shadow-xs rounded-2xl bg-white">
                         <label className="text-xs font-semibold text-slate-600 flex items-center gap-2 mb-2.5">
