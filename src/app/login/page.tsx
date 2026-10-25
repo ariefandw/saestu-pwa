@@ -5,7 +5,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { Activity, AlertTriangle, Fingerprint, ChevronRight, Loader2 } from "lucide-react";
+import { Activity, AlertTriangle, Fingerprint, ChevronRight, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 // [NEW IMPORT]: Ambil AuthContext untuk mengecek apakah user sudah login
@@ -13,11 +13,19 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
+const DEMO_ACCOUNTS = [
+  { label: "Admin Master", email: "admin@saestu.com", password: "password123", role: "Master" },
+  { label: "Petugas Puskesmas", email: "puskesmas@saestu.com", password: "password123", role: "Puskesmas" },
+  { label: "Kader Posyandu", email: "kader@saestu.com", password: "password123", role: "Kader" },
+  { label: "Orang Tua / Ibu", email: "parent@saestu.com", password: "password123", role: "Orang Tua" },
+];
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedDemoRole, setSelectedDemoRole] = useState("");
   const router = useRouter();
 
   // [NEW LOGIC]: Cek status login saat ini
@@ -117,17 +125,54 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-6">
                <div className="space-y-4">
                   
-                  {/* Field Email */}
+                  {/* Field Email dengan Demo Instant Dropdown */}
                   <div>
-                     <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email</label>
-                     <Input 
-                        type="email" 
-                        placeholder="Masukkan alamat email" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="h-14 bg-slate-50 border-slate-200 focus:bg-white text-sm rounded-2xl"
-                     />
+                     <div className="flex justify-between items-center mb-2 ml-1">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Email</label>
+                        <span className="text-[10px] font-bold text-teal-600 flex items-center gap-1">
+                           <Sparkles className="w-3 h-3 text-teal-500" /> Mode Demo
+                        </span>
+                     </div>
+                     <div className="relative flex rounded-2xl border border-slate-200 bg-slate-50 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:bg-white transition-all overflow-hidden shadow-xs">
+                        <input 
+                           type="email" 
+                           placeholder="Masukkan email..." 
+                           value={email}
+                           onChange={(e) => {
+                              setEmail(e.target.value);
+                              setSelectedDemoRole("");
+                           }}
+                           required
+                           className="w-full h-14 px-4 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                        />
+                        <div className="relative border-l border-slate-200 bg-slate-100/80 hover:bg-slate-200/60 transition-colors shrink-0 flex items-center">
+                           <select 
+                              aria-label="Pilih akun demo"
+                              value={selectedDemoRole}
+                              onChange={(e) => {
+                                 const selected = e.target.value;
+                                 setSelectedDemoRole(selected);
+                                 const acc = DEMO_ACCOUNTS.find(a => a.email === selected);
+                                 if (acc) {
+                                    setEmail(acc.email);
+                                    setPassword(acc.password);
+                                    setError("");
+                                 }
+                              }}
+                              className="h-14 pl-3 pr-8 text-xs font-bold text-teal-800 bg-transparent cursor-pointer focus:outline-none appearance-none"
+                           >
+                              <option value="">⚡ Masuk Instan...</option>
+                              {DEMO_ACCOUNTS.map((acc) => (
+                                 <option key={acc.email} value={acc.email} className="text-slate-800 font-medium">
+                                    {acc.role}: {acc.email}
+                                 </option>
+                              ))}
+                           </select>
+                           <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-teal-700">
+                              <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                           </div>
+                        </div>
+                     </div>
                   </div>
 
                   {/* Field Password */}
