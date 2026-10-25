@@ -27,6 +27,7 @@ import Link from "next/link";
 export default function ParentDashboard() {
   const { userProfile, loading: authLoading } = useAuth();
   const [child, setChild] = useState<Child | null>(null);
+  const [childrenList, setChildrenList] = useState<Child[]>([]);
   const [lastMeasurement, setLastMeasurement] = useState<Measurement | null>(null);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("Halo");
@@ -40,31 +41,62 @@ export default function ParentDashboard() {
     else setGreeting("Selamat Malam");
   }, []);
 
+  const loadMeasurementsForChild = async (targetChild: Child) => {
+    try {
+      const measQ = query(
+        collection(db, "measurements"), 
+        where("childId", "==", targetChild.id)
+      );
+      const measSnap = await getDocs(measQ);
+      if (!measSnap.empty) {
+        const list = measSnap.docs.map(d => ({ id: d.id, ...d.data() } as Measurement));
+        list.sort((a, b) => {
+          const timeA = a.date instanceof Date ? a.date.getTime() : (a.date as any)?.toMillis ? (a.date as any).toMillis() : 0;
+          const timeB = b.date instanceof Date ? b.date.getTime() : (b.date as any)?.toMillis ? (b.date as any).toMillis() : 0;
+          return timeB - timeA;
+        });
+        setLastMeasurement(list[0]);
+      } else if (targetChild.lastWeight && targetChild.lastHeight) {
+        setLastMeasurement({
+          id: "snapshot-" + targetChild.id,
+          childId: targetChild.id,
+          posyanduId: targetChild.posyanduId,
+          date: targetChild.lastMeasurementDate || new Date(),
+          ageInMonths: 8,
+          weight: targetChild.lastWeight,
+          height: targetChild.lastHeight,
+          weightStatus: targetChild.lastWeightStatus || "adequate",
+          lengthStatus: targetChild.lastLengthStatus || "adequate",
+          zScoreWFA: targetChild.lastZScoreWFA,
+          zScoreHFA: targetChild.lastZScoreHFA,
+          zScoreWFH: targetChild.lastZScoreWFH,
+          createdAt: new Date(),
+          createdBy: "posyandu",
+        });
+      } else {
+        setLastMeasurement(null);
+      }
+    } catch (e) {
+      console.error("Error loading measurements:", e);
+    }
+  };
+
   useEffect(() => {
     const fetchMyChild = async () => {
       if (!userProfile?.uid) return;
       try {
         const childQ = query(
           collection(db, "children"), 
-          where("parentId", "==", userProfile.uid),
-          limit(1)
+          where("parentId", "==", userProfile.uid)
         );
         const childSnap = await getDocs(childQ);
         
         if (!childSnap.empty) {
-          const childData = { id: childSnap.docs[0].id, ...childSnap.docs[0].data() } as Child;
-          setChild(childData);
-
-          const measQ = query(
-            collection(db, "measurements"), 
-            where("childId", "==", childData.id), 
-            orderBy("date", "desc"), 
-            limit(1)
-          );
-          const measSnap = await getDocs(measQ);
-          if (!measSnap.empty) {
-            setLastMeasurement({ id: measSnap.docs[0].id, ...measSnap.docs[0].data() } as Measurement);
-          }
+          const allChildren = childSnap.docs.map(d => ({ id: d.id, ...d.data() } as Child));
+          setChildrenList(allChildren);
+          const currentChild = allChildren[0];
+          setChild(currentChild);
+          await loadMeasurementsForChild(currentChild);
         }
       } catch (error) {
         console.error("Fetch Error:", error);
@@ -149,6 +181,29 @@ export default function ParentDashboard() {
                         <span>Pemeriksaan: {formatDate(lastMeasurement?.date)}</span>
                     </div>
                 </div>
+
+                {/* Multi-Child Selector Tabs */}
+                {childrenList.length > 1 && (
+                  <div className="flex gap-2 mb-4 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+                    {childrenList.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setChild(c);
+                          loadMeasurementsForChild(c);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+                          child.id === c.id
+                            ? "bg-white text-slate-900 shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900">{child.name}</h2>
                 <p className="text-slate-500 text-xs font-medium flex items-center gap-2 mt-1">
