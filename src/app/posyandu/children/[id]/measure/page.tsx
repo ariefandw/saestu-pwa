@@ -72,8 +72,9 @@ function MeasurementForm() {
     setIsSyncingIoT(true);
     try {
       const edgeUrl = process.env.NEXT_PUBLIC_EDGE_SCALE_URL || "https://scale.technosmart.id";
-      // Ambil beberapa terbaru, lalu saring di client (server filter=real terbukti masih meloloskan data MOCK).
-      const res = await fetch(`${edgeUrl}/api/v1/measurements?limit=10&filter=real`, {
+      // Umur data (max_age_sec) dihitung oleh server edge, bukan jam HP kader (anti clock-skew).
+      // Filter mock di client tetap dipertahankan sebagai sabuk pengaman untuk edge versi lama.
+      const res = await fetch(`${edgeUrl}/api/v1/measurements?limit=10&filter=real&max_age_sec=300`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error("Gagal mengambil data dari Timbangan IoT");
@@ -83,17 +84,12 @@ function MeasurementForm() {
         return;
       }
 
-      const MAX_AGE_MS = 5 * 60 * 1000;
-      const now = Date.now();
       const isMock = (m: { device_id?: string; notes?: string }) =>
         (m.device_id ?? "").toUpperCase().startsWith("MOCK") || /simulasi|mock/i.test(m.notes ?? "");
 
       const candidates = (list as any[])
         .filter((m) => !isMock(m))
-        .filter((m) => {
-          const t = Date.parse(m.created_at);
-          return Number.isFinite(t) && now - t >= 0 && now - t <= MAX_AGE_MS;
-        })
+        .filter((m) => Number.isFinite(Date.parse(m.created_at)))
         .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
 
       if (candidates.length === 0) {
@@ -104,13 +100,13 @@ function MeasurementForm() {
       const latest = candidates[0];
       const weightKg = latest.weight_grams ? (latest.weight_grams / 1000).toFixed(2) : "";
       const lengthCm = latest.length_cm ? latest.length_cm.toFixed(1) : "";
-      const ageSec = Math.round((now - Date.parse(latest.created_at)) / 1000);
+      const weighedAt = new Date(latest.created_at).toLocaleTimeString("id-ID");
 
       const hasManual = formData.weight !== "" || formData.height !== "";
       const ok = window.confirm(
         `Pakai data timbangan ${latest.device_id}?\n` +
         `Berat: ${weightKg || "-"} kg\nPanjang: ${lengthCm || "-"} cm\n` +
-        `Ditimbang ${ageSec} detik lalu.\n` +
+        `Ditimbang pukul ${weighedAt}.\n` +
         (hasManual ? "\nPERINGATAN: nilai yang sudah diisi akan ditimpa." : "") +
         `\nPastikan ini data untuk ${child?.name ?? "anak ini"}.`
       );
