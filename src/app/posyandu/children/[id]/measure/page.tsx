@@ -72,11 +72,23 @@ function MeasurementForm() {
     setIsSyncingIoT(true);
     try {
       const edgeUrl = process.env.NEXT_PUBLIC_EDGE_SCALE_URL || "https://scale.technosmart.id";
-      const res = await fetch(`${edgeUrl}/api/v1/measurements?limit=1`, {
+      // Coba ambil pengukuran real terlebih dahulu (filter=real)
+      let res = await fetch(`${edgeUrl}/api/v1/measurements?limit=1&filter=real`, {
         cache: "no-store",
       });
+      // Fallback jika backend lama belum support filter
+      if (!res.ok) {
+        res = await fetch(`${edgeUrl}/api/v1/measurements?limit=1`, {
+          cache: "no-store",
+        });
+      }
       if (!res.ok) throw new Error("Gagal mengambil data dari Timbangan IoT");
-      const list = await res.json();
+      let list = await res.json();
+      // Jika filter=real kosong, fallback ke list biasa
+      if ((!Array.isArray(list) || list.length === 0)) {
+        const fallbackRes = await fetch(`${edgeUrl}/api/v1/measurements?limit=1`, { cache: "no-store" });
+        if (fallbackRes.ok) list = await fallbackRes.json();
+      }
       if (!Array.isArray(list) || list.length === 0) {
         showToast("Belum ada data dari timbangan IoT. Silakan timbang balita.", "info");
         return;
