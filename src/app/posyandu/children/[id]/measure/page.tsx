@@ -72,30 +72,49 @@ function MeasurementForm() {
     setIsSyncingIoT(true);
     try {
       const edgeUrl = process.env.NEXT_PUBLIC_EDGE_SCALE_URL || "https://scale.technosmart.id";
-      // Coba ambil pengukuran real terlebih dahulu (filter=real)
-      let res = await fetch(`${edgeUrl}/api/v1/measurements?limit=1&filter=real`, {
+      // Ambil beberapa terbaru, lalu saring di client (server filter=real terbukti masih meloloskan data MOCK).
+      const res = await fetch(`${edgeUrl}/api/v1/measurements?limit=10&filter=real`, {
         cache: "no-store",
       });
-      // Fallback jika backend lama belum support filter
-      if (!res.ok) {
-        res = await fetch(`${edgeUrl}/api/v1/measurements?limit=1`, {
-          cache: "no-store",
-        });
-      }
       if (!res.ok) throw new Error("Gagal mengambil data dari Timbangan IoT");
-      let list = await res.json();
-      // Jika filter=real kosong, fallback ke list biasa
-      if ((!Array.isArray(list) || list.length === 0)) {
-        const fallbackRes = await fetch(`${edgeUrl}/api/v1/measurements?limit=1`, { cache: "no-store" });
-        if (fallbackRes.ok) list = await fallbackRes.json();
-      }
+      const list: unknown = await res.json();
       if (!Array.isArray(list) || list.length === 0) {
         showToast("Belum ada data dari timbangan IoT. Silakan timbang balita.", "info");
         return;
       }
-      const latest = list[0];
+
+      const MAX_AGE_MS = 5 * 60 * 1000;
+      const now = Date.now();
+      const isMock = (m: { device_id?: string; notes?: string }) =>
+        (m.device_id ?? "").toUpperCase().startsWith("MOCK") || /simulasi|mock/i.test(m.notes ?? "");
+
+      const candidates = (list as any[])
+        .filter((m) => !isMock(m))
+        .filter((m) => {
+          const t = Date.parse(m.created_at);
+          return Number.isFinite(t) && now - t >= 0 && now - t <= MAX_AGE_MS;
+        })
+        .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+
+      if (candidates.length === 0) {
+        showToast("Tidak ada penimbangan baru (maks. 5 menit terakhir). Timbang balita dulu, lalu tekan lagi.", "info");
+        return;
+      }
+
+      const latest = candidates[0];
       const weightKg = latest.weight_grams ? (latest.weight_grams / 1000).toFixed(2) : "";
       const lengthCm = latest.length_cm ? latest.length_cm.toFixed(1) : "";
+      const ageSec = Math.round((now - Date.parse(latest.created_at)) / 1000);
+
+      const hasManual = formData.weight !== "" || formData.height !== "";
+      const ok = window.confirm(
+        `Pakai data timbangan ${latest.device_id}?\n` +
+        `Berat: ${weightKg || "-"} kg\nPanjang: ${lengthCm || "-"} cm\n` +
+        `Ditimbang ${ageSec} detik lalu.\n` +
+        (hasManual ? "\nPERINGATAN: nilai yang sudah diisi akan ditimpa." : "") +
+        `\nPastikan ini data untuk ${child?.name ?? "anak ini"}.`
+      );
+      if (!ok) return;
 
       setFormData(prev => ({
         ...prev,
