@@ -23,6 +23,19 @@ const nextConfig: NextConfig = {
      Ini akan menghilangkan error saat menjalankan 'npm run dev'.
   */
   turbopack: {},
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: "camera=*, microphone=*, geolocation=*",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default withPWA(nextConfig);
