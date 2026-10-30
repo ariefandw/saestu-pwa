@@ -372,10 +372,9 @@ function DialogBody({
     if (file) void handleProcessFile(file);
   };
 
-  const handleLoadPreset = async (presetUrl: string, targetMethod: EstimationMethod) => {
+  const handleLoadPreset = async (presetUrl: string) => {
     try {
       setError(null);
-      handleMethodChange(targetMethod);
       const resp = await fetch(presetUrl);
       if (!resp.ok) throw new Error("Gagal mengunduh gambar preset");
       const blob = await resp.blob();
@@ -665,32 +664,32 @@ function DialogBody({
                   <button
                     type="button"
                     disabled={phase === "processing"}
-                    onClick={() => void handleLoadPreset("/example/bayi1_mediapipe_tb_actual_61.3cm.jpg", "mediapipe")}
+                    onClick={() => void handleLoadPreset("/example/bayi1_tb61.3cm.jpg")}
                     className="p-2 bg-white border border-slate-200 hover:border-teal-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
                   >
-                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 1: MediaPipe</div>
+                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 1</div>
                     <div className="text-[10px] text-teal-600 font-bold mt-0.5">TB Actual: 61.3 cm</div>
-                    <div className="text-[9px] text-slate-400">Infantometer Posyandu</div>
+                    <div className="text-[9px] text-slate-400">Infantometer mistar fisik</div>
                   </button>
                   <button
                     type="button"
                     disabled={phase === "processing"}
-                    onClick={() => void handleLoadPreset("/example/bayi2_contour_tb_actual_78.6cm.jpg", "contour_caliper")}
+                    onClick={() => void handleLoadPreset("/example/bayi2_tb78.6cm.jpg")}
                     className="p-2 bg-white border border-slate-200 hover:border-sky-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
                   >
-                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 2: Kontur Siluet</div>
+                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 2</div>
                     <div className="text-[10px] text-sky-600 font-bold mt-0.5">TB Actual: 78.6 cm</div>
                     <div className="text-[9px] text-slate-400">Matras pediatrik polos</div>
                   </button>
                   <button
                     type="button"
                     disabled={phase === "processing"}
-                    onClick={() => void handleLoadPreset("/example/bayi3_aruco_tb_actual_80.7cm.jpg", "aruco_marker")}
+                    onClick={() => void handleLoadPreset("/example/bayi3_tb80.7cm.jpg")}
                     className="p-2 bg-white border border-slate-200 hover:border-purple-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
                   >
-                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 3: ArUco Marker</div>
+                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 3</div>
                     <div className="text-[10px] text-purple-600 font-bold mt-0.5">TB Actual: 80.7 cm</div>
-                    <div className="text-[9px] text-slate-400">Marker fisik 10x10 cm</div>
+                    <div className="text-[9px] text-slate-400">Matras klinis + ArUco</div>
                   </button>
                 </div>
               </div>
