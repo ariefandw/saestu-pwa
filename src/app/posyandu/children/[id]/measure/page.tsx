@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Toast, ToastType } from "@/components/ui/Toast";
+import { HeightCameraDialog, HeightCameraResult } from "@/components/measure/HeightCameraDialog";
 import { cn } from "@/lib/utils";
 
 // Komponen Utama dengan Suspense Wrapper
@@ -67,6 +68,21 @@ function MeasurementForm() {
   });
 
   const [isSyncingIoT, setIsSyncingIoT] = useState(false);
+  const [isHeightDialogOpen, setIsHeightDialogOpen] = useState(false);
+  const edgeUrl = process.env.NEXT_PUBLIC_EDGE_SCALE_URL || "https://scale.technosmart.id";
+
+  const handleApplyCameraResult = ({ heightCm, weightKg }: HeightCameraResult) => {
+    setFormData(prev => ({
+      ...prev,
+      height: heightCm.toFixed(1),
+      // BB opsional di dialog: kosong = jangan timpa BB yang sudah terisi
+      ...(weightKg !== null ? { weight: weightKg.toFixed(2) } : {}),
+    }));
+    showToast(
+      `Hasil kamera dipakai: TB ${heightCm.toFixed(1)} cm${weightKg !== null ? `, BB ${weightKg.toFixed(2)} kg` : ""}`,
+      "success"
+    );
+  };
 
   const syncWithIoTScale = async () => {
     setIsSyncingIoT(true);
@@ -325,6 +341,28 @@ function MeasurementForm() {
                         >
                             <Wifi className={cn("w-4 h-4", isSyncingIoT && "animate-pulse")} />
                             <span>{isSyncingIoT ? "Sinkronisasi..." : "Tarik Data IoT"}</span>
+                        </Button>
+                    </Card>
+
+                    {/* --- UKUR TB VIA KAMERA (BB manual opsional) --- */}
+                    <Card className="p-4 sm:p-5 border-slate-200 shadow-xs rounded-2xl bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-xs">
+                                <Camera className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-slate-900">Ukur Tinggi via Kamera</h4>
+                                <p className="text-xs text-slate-500">TB dideteksi dari kamera, BB diisi manual (opsional). Ada pengaturan kalibrasi.</p>
+                            </div>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setIsHeightDialogOpen(true)}
+                            className="w-full sm:w-auto"
+                        >
+                            <Camera className="w-4 h-4" />
+                            <span>Buka Kamera</span>
                         </Button>
                     </Card>
 
@@ -635,6 +673,13 @@ function MeasurementForm() {
              </p>
           </div>
         )}
+
+        <HeightCameraDialog
+            isOpen={isHeightDialogOpen}
+            onClose={() => setIsHeightDialogOpen(false)}
+            onApply={handleApplyCameraResult}
+            edgeUrl={edgeUrl}
+        />
 
         <Toast 
             message={toast.message} type={toast.type} 
