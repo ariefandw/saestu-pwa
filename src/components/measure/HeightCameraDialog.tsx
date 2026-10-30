@@ -12,6 +12,7 @@ import {
   Scan,
   Layers,
   Video,
+  Upload,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -73,7 +74,7 @@ function isEstimateResponse(value: unknown): value is EstimateResponse {
 
 export function HeightCameraDialog({ isOpen, onClose, onApply, edgeUrl }: HeightCameraDialogProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Ukur Tinggi via Kamera" maxWidth="max-w-4xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Ukur Tinggi via Kamera / Upload Gambar" maxWidth="max-w-4xl">
       {isOpen && <DialogBody onClose={onClose} onApply={onApply} edgeUrl={edgeUrl} />}
     </Modal>
   );
@@ -88,10 +89,12 @@ function DialogBody({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const lastCapturedBlobRef = useRef<Blob | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phase, setPhase] = useState<Phase>("live");
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
 
   // Daftar perangkat kamera (misal: Webcam Logitech USB vs Kamera internal)
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
@@ -325,7 +328,46 @@ function DialogBody({
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("File harus berformat gambar (JPG, PNG, WebP).");
+      return;
+    }
+
+    if (calib.method !== "aruco_marker" && !maxDimValid) {
+      setShowCalibration(true);
+      setError(`Kalibrasi skala harus ${MIN_MAX_DIM_CM}-${MAX_MAX_DIM_CM} cm.`);
+      return;
+    }
+    if (calib.method === "aruco_marker" && !markerSizeValid) {
+      setShowCalibration(true);
+      setError(`Ukuran marker ArUco harus ${MIN_MARKER_SIZE_CM}-${MAX_MARKER_SIZE_CM} cm.`);
+      return;
+    }
+
+    if (uploadedPreviewUrl) {
+      URL.revokeObjectURL(uploadedPreviewUrl);
+    }
+    const preview = URL.createObjectURL(file);
+    setUploadedPreviewUrl(preview);
+    lastCapturedBlobRef.current = file;
+
+    // Reset input agar bisa pilih ulang file yang sama jika diinginkan
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    await executeEstimate(file, calib.method);
+  };
+
   const retake = () => {
+    if (uploadedPreviewUrl) {
+      URL.revokeObjectURL(uploadedPreviewUrl);
+      setUploadedPreviewUrl(null);
+    }
     lastCapturedBlobRef.current = null;
     setResult(null);
     setHeightInput("");
@@ -333,6 +375,14 @@ function DialogBody({
     setPhase("live");
     void startCamera(selectedDeviceId);
   };
+
+  useEffect(() => {
+    return () => {
+      if (uploadedPreviewUrl) {
+        URL.revokeObjectURL(uploadedPreviewUrl);
+      }
+    };
+  }, [uploadedPreviewUrl]);
 
   const heightValue = Number(heightInput);
   const heightValid = Number.isFinite(heightValue) && heightValue > 0;
@@ -379,39 +429,70 @@ function DialogBody({
 
           {/* Viewport Video / Foto Anotasi */}
           <div className="rounded-2xl overflow-hidden bg-slate-950 relative aspect-video shadow-md border border-slate-800 flex items-center justify-center">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className={`w-full h-full object-cover ${phase === "result" ? "hidden" : ""}`}
-            />
-            {phase === "result" && result?.annotated_image && (
+            {phase === "result" && result?.annotated_image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={result.annotated_image}
                 alt="Visualisasi pengukuran"
                 className="w-full h-full object-contain bg-black"
               />
+            ) : uploadedPreviewUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={uploadedPreviewUrl}
+                alt="Preview upload gambar"
+                className="w-full h-full object-contain bg-black"
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
             )}
             {phase === "processing" && (
-              <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white p-4 text-center">
+              <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white p-4 text-center z-10">
                 <RefreshCw className="w-9 h-9 animate-spin text-teal-400" />
                 <p className="text-sm font-bold tracking-wide">Menganalisis dengan {currentMethodObj.name}...</p>
                 <p className="text-xs text-slate-400">Server edge sedang memproses gambar</p>
               </div>
             )}
-            {cameraError && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-900 text-rose-200 gap-3">
+            {cameraError && !uploadedPreviewUrl && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-900 text-rose-200 gap-3 z-10">
                 <AlertTriangle className="w-8 h-8 text-rose-400" />
                 <p className="text-xs font-semibold leading-relaxed max-w-sm">{cameraError}</p>
-                <Button type="button" size="sm" variant="outline" onClick={() => void startCamera(selectedDeviceId)} className="text-xs text-white border-white/20 hover:bg-white/10">
-                  <RefreshCw className="w-3.5 h-3.5 mr-1" /> Coba Lagi
-                </Button>
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs font-bold bg-white text-slate-900 hover:bg-slate-100 shadow-sm"
+                  >
+                    <Upload className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> Upload Foto Anak
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void startCamera(selectedDeviceId)}
+                    className="text-xs text-white border-white/20 hover:bg-white/10"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 mr-1" /> Coba Lagi
+                  </Button>
+                </div>
               </div>
             )}
           </div>
           <canvas ref={canvasRef} className="hidden" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => void handleFileUpload(e)}
+          />
 
           {error && (
             <div className="flex gap-2 items-start rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
@@ -421,19 +502,39 @@ function DialogBody({
           )}
 
           {phase !== "result" ? (
-            <Button
-              type="button"
-              className="w-full h-12 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs"
-              onClick={() => void captureAndMeasure()}
-              isLoading={phase === "processing"}
-              disabled={phase === "processing" || cameraError !== null}
-            >
-              <Camera className="w-4 h-4 mr-2" /> Ambil Foto &amp; Ukur ({currentMethodObj.badge})
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                className="flex-1 h-12 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+                onClick={() => void captureAndMeasure()}
+                isLoading={phase === "processing" && !uploadedPreviewUrl}
+                disabled={phase === "processing" || (cameraError !== null && !uploadedPreviewUrl)}
+              >
+                <Camera className="w-4 h-4 mr-2" /> Ambil Foto &amp; Ukur ({currentMethodObj.badge})
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 px-4 border-slate-300 hover:bg-slate-100 font-semibold text-slate-700 rounded-xl"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={phase === "processing"}
+                isLoading={phase === "processing" && !!uploadedPreviewUrl}
+              >
+                <Upload className="w-4 h-4 mr-1.5 text-slate-600" /> Upload Gambar
+              </Button>
+            </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button type="button" variant="outline" className="flex-1 h-11" onClick={retake}>
                 <RefreshCw className="w-4 h-4 mr-1.5" /> Foto Ulang
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-11"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-4 h-4 mr-1.5" /> Ganti Foto
               </Button>
               <Button
                 type="button"

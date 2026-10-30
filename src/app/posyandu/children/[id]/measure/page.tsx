@@ -368,7 +368,7 @@ function MeasurementForm() {
                                 <Camera className="w-5 h-5" />
                             </div>
                             <div>
-                                <h4 className="text-sm font-bold text-slate-900">Ukur Tinggi via Kamera</h4>
+                                <h4 className="text-sm font-bold text-slate-900">Ukur Tinggi via Kamera / Upload Foto</h4>
                                 <p className="text-xs text-slate-500">TB dideteksi dari kamera, BB diisi manual (opsional). Ada pengaturan kalibrasi.</p>
                             </div>
                         </div>
@@ -379,7 +379,7 @@ function MeasurementForm() {
                             className="w-full sm:w-auto"
                         >
                             <Camera className="w-4 h-4" />
-                            <span>Buka Kamera</span>
+                            <span>Buka Kamera / Upload</span>
                         </Button>
                     </Card>
 
