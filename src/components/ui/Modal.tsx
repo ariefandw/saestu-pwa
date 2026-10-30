@@ -9,9 +9,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-lg" }: ModalProps) {
   const [showModal, setShowModal] = React.useState(isOpen);
 
   React.useEffect(() => {
@@ -41,7 +42,8 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       {/* Modal Panel */}
       <div 
         className={cn(
-          "relative w-full max-w-lg transform overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl transition-all duration-300",
+          "relative w-full transform overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl transition-all duration-300",
+          maxWidth,
           isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-8 scale-95 opacity-0"
         )}
       >

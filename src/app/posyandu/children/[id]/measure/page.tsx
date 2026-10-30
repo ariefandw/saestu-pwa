@@ -170,17 +170,34 @@ function MeasurementForm() {
     setIsCameraOpen(true);
     
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false
-      });
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Browser tidak mendukung kamera WebRTC (butuh HTTPS).");
+      }
+      let stream: MediaStream;
+      try {
+        // Coba kamera belakang (HP), gunakan ideal agar tidak gagal di laptop/webcam PC
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+      } catch {
+        // Fallback laptop / webcam USB
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err) {
-      console.error("Akses kamera ditolak:", err);
-      showToast("Gagal mengakses kamera. Periksa izin kamera.", "error");
+    } catch (err: any) {
+      console.error("Akses kamera gagal:", err);
+      const isDenied = err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError";
+      const msg = isDenied
+        ? "Izin kamera diblokir. Klik ikon gembok di URL browser untuk mengizinkan akses kamera."
+        : "Gagal membuka kamera. Pastikan browser diizinkan dan kamera tidak dipakai aplikasi lain.";
+      showToast(msg, "error");
       closeCamera();
     }
   };
