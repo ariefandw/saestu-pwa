@@ -665,32 +665,32 @@ function DialogBody({
                   <button
                     type="button"
                     disabled={phase === "processing"}
-                    onClick={() => void handleLoadPreset("/example/1_mediapipe_tb61.3cm_kalibrasi100cm.jpg", "mediapipe")}
+                    onClick={() => void handleLoadPreset("/example/bayi1_mediapipe_tb_actual_61.3cm.jpg", "mediapipe")}
                     className="p-2 bg-white border border-slate-200 hover:border-teal-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
                   >
-                    <div className="text-[11px] font-bold text-slate-900 truncate">1. MediaPipe Pose</div>
-                    <div className="text-[10px] text-teal-600 font-bold mt-0.5">Target: 61.3 cm</div>
-                    <div className="text-[9px] text-slate-400">Infantometer asli</div>
+                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 1: MediaPipe</div>
+                    <div className="text-[10px] text-teal-600 font-bold mt-0.5">TB Actual: 61.3 cm</div>
+                    <div className="text-[9px] text-slate-400">Infantometer Posyandu</div>
                   </button>
                   <button
                     type="button"
                     disabled={phase === "processing"}
-                    onClick={() => void handleLoadPreset("/example/2_contour_tb78.6cm_kalibrasi100cm.jpg", "contour_caliper")}
+                    onClick={() => void handleLoadPreset("/example/bayi2_contour_tb_actual_78.6cm.jpg", "contour_caliper")}
                     className="p-2 bg-white border border-slate-200 hover:border-sky-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
                   >
-                    <div className="text-[11px] font-bold text-slate-900 truncate">2. Siluet Kontur</div>
-                    <div className="text-[10px] text-sky-600 font-bold mt-0.5">Target: 78.6 cm</div>
-                    <div className="text-[9px] text-slate-400">Matras biru polos</div>
+                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 2: Kontur Siluet</div>
+                    <div className="text-[10px] text-sky-600 font-bold mt-0.5">TB Actual: 78.6 cm</div>
+                    <div className="text-[9px] text-slate-400">Matras pediatrik polos</div>
                   </button>
                   <button
                     type="button"
                     disabled={phase === "processing"}
-                    onClick={() => void handleLoadPreset("/example/3_aruco_tb79.3cm_marker10cm.jpg", "aruco_marker")}
+                    onClick={() => void handleLoadPreset("/example/bayi3_aruco_tb_actual_80.7cm.jpg", "aruco_marker")}
                     className="p-2 bg-white border border-slate-200 hover:border-purple-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
                   >
-                    <div className="text-[11px] font-bold text-slate-900 truncate">3. ArUco Marker</div>
-                    <div className="text-[10px] text-purple-600 font-bold mt-0.5">Target: 79.3 cm</div>
-                    <div className="text-[9px] text-slate-400">Marker fisik 10cm</div>
+                    <div className="text-[11px] font-bold text-slate-900 truncate">Bayi 3: ArUco Marker</div>
+                    <div className="text-[10px] text-purple-600 font-bold mt-0.5">TB Actual: 80.7 cm</div>
+                    <div className="text-[9px] text-slate-400">Marker fisik 10x10 cm</div>
                   </button>
                 </div>
               </div>
