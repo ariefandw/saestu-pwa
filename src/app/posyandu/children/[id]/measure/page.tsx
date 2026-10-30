@@ -10,7 +10,7 @@ import { addMeasurement } from "@/lib/services/measurements";
 import { calculateChildZScores } from "@/lib/who-standards";
 import { differenceInMonths } from "date-fns";
 import { 
-  ArrowLeft, Save, Calendar, Weight, Ruler, Camera, X, RefreshCw, Brain, ScanLine, AlertCircle, CheckCircle, AlertTriangle, Wifi, Cpu
+  ArrowLeft, Save, Calendar, Weight, Ruler, Camera, Upload, X, RefreshCw, Brain, ScanLine, AlertCircle, CheckCircle, AlertTriangle, Wifi, Cpu
 } from "lucide-react";
 
 // UI Components
@@ -69,6 +69,12 @@ function MeasurementForm() {
 
   const [isSyncingIoT, setIsSyncingIoT] = useState(false);
   const [isHeightDialogOpen, setIsHeightDialogOpen] = useState(false);
+  const [heightDialogMode, setHeightDialogMode] = useState<"camera" | "upload">("camera");
+
+  const openHeightDialog = (mode: "camera" | "upload") => {
+    setHeightDialogMode(mode);
+    setIsHeightDialogOpen(true);
+  };
   const edgeUrl = process.env.NEXT_PUBLIC_EDGE_SCALE_URL || "https://scale.technosmart.id";
 
   const handleApplyCameraResult = ({ heightCm, weightKg }: HeightCameraResult) => {
@@ -372,15 +378,26 @@ function MeasurementForm() {
                                 <p className="text-xs text-slate-500">TB dideteksi dari kamera, BB diisi manual (opsional). Ada pengaturan kalibrasi.</p>
                             </div>
                         </div>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setIsHeightDialogOpen(true)}
-                            className="w-full sm:w-auto"
-                        >
-                            <Camera className="w-4 h-4" />
-                            <span>Buka Kamera / Upload</span>
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => openHeightDialog("camera")}
+                                className="flex-1 sm:flex-none"
+                            >
+                                <Camera className="w-4 h-4 mr-1.5" />
+                                <span>Buka Kamera</span>
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => openHeightDialog("upload")}
+                                className="flex-1 sm:flex-none border-slate-300 text-slate-700 hover:bg-slate-100"
+                            >
+                                <Upload className="w-4 h-4 mr-1.5 text-teal-600" />
+                                <span>Upload Gambar</span>
+                            </Button>
+                        </div>
                     </Card>
 
                     {/* --- TANGGAL --- */}
@@ -693,6 +710,7 @@ function MeasurementForm() {
 
         <HeightCameraDialog
             isOpen={isHeightDialogOpen}
+            initialMode={heightDialogMode}
             onClose={() => setIsHeightDialogOpen(false)}
             onApply={handleApplyCameraResult}
             edgeUrl={edgeUrl}

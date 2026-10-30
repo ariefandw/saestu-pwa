@@ -13,6 +13,7 @@ import {
   Layers,
   Video,
   Upload,
+  Sparkles,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -46,6 +47,7 @@ interface HeightCameraDialogProps {
   onClose: () => void;
   onApply: (result: HeightCameraResult) => void;
   edgeUrl: string;
+  initialMode?: "camera" | "upload";
 }
 
 interface EstimateResponse {
@@ -72,10 +74,10 @@ function isEstimateResponse(value: unknown): value is EstimateResponse {
   return typeof value === "object" && value !== null && typeof (value as { success?: unknown }).success === "boolean";
 }
 
-export function HeightCameraDialog({ isOpen, onClose, onApply, edgeUrl }: HeightCameraDialogProps) {
+export function HeightCameraDialog({ isOpen, onClose, onApply, edgeUrl, initialMode = "camera" }: HeightCameraDialogProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Ukur Tinggi via Kamera / Upload Gambar" maxWidth="max-w-4xl">
-      {isOpen && <DialogBody onClose={onClose} onApply={onApply} edgeUrl={edgeUrl} />}
+      {isOpen && <DialogBody onClose={onClose} onApply={onApply} edgeUrl={edgeUrl} initialMode={initialMode} />}
     </Modal>
   );
 }
@@ -84,13 +86,15 @@ function DialogBody({
   onClose,
   onApply,
   edgeUrl,
-}: Pick<HeightCameraDialogProps, "onClose" | "onApply" | "edgeUrl">) {
+  initialMode = "camera",
+}: Pick<HeightCameraDialogProps, "onClose" | "onApply" | "edgeUrl" | "initialMode">) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const lastCapturedBlobRef = useRef<Blob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [activeTab, setActiveTab] = useState<"camera" | "upload">(initialMode);
   const [phase, setPhase] = useState<Phase>("live");
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -195,9 +199,13 @@ function DialogBody({
   }, [stopCamera]);
 
   useEffect(() => {
-    void startCamera();
+    if (activeTab === "camera") {
+      void startCamera();
+    } else {
+      stopCamera();
+    }
     return stopCamera;
-  }, [startCamera, stopCamera]);
+  }, [activeTab, startCamera, stopCamera]);
 
   const handleDeviceChange = (deviceId: string) => {
     setSelectedDeviceId(deviceId);
@@ -328,11 +336,8 @@ function DialogBody({
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
+  const handleProcessFile = async (blob: Blob) => {
+    if (blob instanceof File && !blob.type.startsWith("image/")) {
       setError("File harus berformat gambar (JPG, PNG, WebP).");
       return;
     }
@@ -351,16 +356,34 @@ function DialogBody({
     if (uploadedPreviewUrl) {
       URL.revokeObjectURL(uploadedPreviewUrl);
     }
-    const preview = URL.createObjectURL(file);
+    const preview = URL.createObjectURL(blob);
     setUploadedPreviewUrl(preview);
-    lastCapturedBlobRef.current = file;
+    lastCapturedBlobRef.current = blob;
 
-    // Reset input agar bisa pilih ulang file yang sama jika diinginkan
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
 
-    await executeEstimate(file, calib.method);
+    await executeEstimate(blob, calib.method);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) void handleProcessFile(file);
+  };
+
+  const handleLoadPreset = async (presetUrl: string, targetMethod: EstimationMethod) => {
+    try {
+      setError(null);
+      handleMethodChange(targetMethod);
+      const resp = await fetch(presetUrl);
+      if (!resp.ok) throw new Error("Gagal mengunduh gambar preset");
+      const blob = await resp.blob();
+      await handleProcessFile(blob);
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      setError(err?.message || "Gagal memuat preset gambar");
+    }
   };
 
   const retake = () => {
@@ -373,7 +396,9 @@ function DialogBody({
     setHeightInput("");
     setError(null);
     setPhase("live");
-    void startCamera(selectedDeviceId);
+    if (activeTab === "camera") {
+      void startCamera(selectedDeviceId);
+    }
   };
 
   useEffect(() => {
@@ -408,142 +433,283 @@ function DialogBody({
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
         {/* KOLOM KIRI: Kamera & Visualisasi Hasil (Lebar & Leluasa) */}
         <div className="md:col-span-7 space-y-3">
-          {/* Pilihan Perangkat Kamera (Jika ada lebih dari 1 kamera, misal Logitech C920) */}
-          {videoDevices.length > 1 && (
-            <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl text-xs">
-              <Video className="w-4 h-4 text-slate-600 shrink-0" />
-              <label className="font-bold text-slate-700 shrink-0">Sumber Kamera:</label>
-              <select
-                value={selectedDeviceId}
-                onChange={(e) => handleDeviceChange(e.target.value)}
-                className="bg-white border border-slate-200 rounded-lg py-1 px-2 text-xs font-semibold text-slate-800 flex-1 truncate focus:outline-none focus:ring-2 focus:ring-teal-500"
-              >
-                {videoDevices.map((dev, idx) => (
-                  <option key={dev.deviceId || idx} value={dev.deviceId}>
-                    {dev.label || `Kamera ${idx + 1}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Tab Pemilih Mode: Kamera Live vs Upload Gambar */}
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("camera");
+                setUploadedPreviewUrl(null);
+                setResult(null);
+                setPhase("live");
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "camera" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5 text-teal-600" />
+              Kamera Live
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("upload");
+                stopCamera();
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "upload" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Upload className="w-3.5 h-3.5 text-teal-600" />
+              Upload Gambar
+            </button>
+          </div>
 
-          {/* Viewport Video / Foto Anotasi */}
-          <div className="rounded-2xl overflow-hidden bg-slate-950 relative aspect-video shadow-md border border-slate-800 flex items-center justify-center">
-            {phase === "result" && result?.annotated_image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={result.annotated_image}
-                alt="Visualisasi pengukuran"
-                className="w-full h-full object-contain bg-black"
-              />
-            ) : uploadedPreviewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={uploadedPreviewUrl}
-                alt="Preview upload gambar"
-                className="w-full h-full object-contain bg-black"
-              />
-            ) : (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-            )}
-            {phase === "processing" && (
-              <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white p-4 text-center z-10">
-                <RefreshCw className="w-9 h-9 animate-spin text-teal-400" />
-                <p className="text-sm font-bold tracking-wide">Menganalisis dengan {currentMethodObj.name}...</p>
-                <p className="text-xs text-slate-400">Server edge sedang memproses gambar</p>
-              </div>
-            )}
-            {cameraError && !uploadedPreviewUrl && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-900 text-rose-200 gap-3 z-10">
-                <AlertTriangle className="w-8 h-8 text-rose-400" />
-                <p className="text-xs font-semibold leading-relaxed max-w-sm">{cameraError}</p>
-                <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs font-bold bg-white text-slate-900 hover:bg-slate-100 shadow-sm"
+          {activeTab === "camera" ? (
+            <>
+              {/* Pilihan Perangkat Kamera */}
+              {videoDevices.length > 1 && (
+                <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl text-xs">
+                  <Video className="w-4 h-4 text-slate-600 shrink-0" />
+                  <label className="font-bold text-slate-700 shrink-0">Sumber Kamera:</label>
+                  <select
+                    value={selectedDeviceId}
+                    onChange={(e) => handleDeviceChange(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg py-1 px-2 text-xs font-semibold text-slate-800 flex-1 truncate focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
-                    <Upload className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> Upload Foto Anak
+                    {videoDevices.map((dev, idx) => (
+                      <option key={dev.deviceId || idx} value={dev.deviceId}>
+                        {dev.label || `Kamera ${idx + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Viewport Video / Foto Anotasi */}
+              <div className="rounded-2xl overflow-hidden bg-slate-950 relative aspect-video shadow-md border border-slate-800 flex items-center justify-center">
+                {phase === "result" && result?.annotated_image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={result.annotated_image}
+                    alt="Visualisasi pengukuran"
+                    className="w-full h-full object-contain bg-black"
+                  />
+                ) : (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                {phase === "processing" && (
+                  <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white p-4 text-center z-10">
+                    <RefreshCw className="w-9 h-9 animate-spin text-teal-400" />
+                    <p className="text-sm font-bold tracking-wide">Menganalisis dengan {currentMethodObj.name}...</p>
+                    <p className="text-xs text-slate-400">Server edge sedang memproses gambar</p>
+                  </div>
+                )}
+                {cameraError && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-900 text-rose-200 gap-3 z-10">
+                    <AlertTriangle className="w-8 h-8 text-rose-400" />
+                    <p className="text-xs font-semibold leading-relaxed max-w-sm">{cameraError}</p>
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          setActiveTab("upload");
+                          stopCamera();
+                        }}
+                        className="text-xs font-bold bg-white text-slate-900 hover:bg-slate-100 shadow-sm"
+                      >
+                        <Upload className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> Beralih ke Upload Gambar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void startCamera(selectedDeviceId)}
+                        className="text-xs text-white border-white/20 hover:bg-white/10"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 mr-1" /> Coba Lagi
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {phase !== "result" ? (
+                <Button
+                  type="button"
+                  className="w-full h-12 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+                  onClick={() => void captureAndMeasure()}
+                  isLoading={phase === "processing"}
+                  disabled={phase === "processing" || cameraError !== null}
+                >
+                  <Camera className="w-4 h-4 mr-2" /> Ambil Foto &amp; Ukur ({currentMethodObj.badge})
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" className="flex-1 h-11" onClick={retake}>
+                    <RefreshCw className="w-4 h-4 mr-1.5" /> Foto Ulang
                   </Button>
                   <Button
                     type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void startCamera(selectedDeviceId)}
-                    className="text-xs text-white border-white/20 hover:bg-white/10"
+                    className="flex-1 h-11 font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl"
+                    onClick={handleApply}
+                    disabled={!heightValid || !weightValid}
                   >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1" /> Coba Lagi
+                    Pakai Hasil
                   </Button>
                 </div>
+              )}
+            </>
+          ) : (
+            /* MODE UPLOAD GAMBAR */
+            <>
+              {phase === "result" && result?.annotated_image ? (
+                <div className="rounded-2xl overflow-hidden bg-slate-950 relative aspect-video shadow-md border border-slate-800 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={result.annotated_image}
+                    alt="Visualisasi pengukuran"
+                    className="w-full h-full object-contain bg-black"
+                  />
+                </div>
+              ) : uploadedPreviewUrl ? (
+                <div className="rounded-2xl overflow-hidden bg-slate-950 relative aspect-video shadow-md border border-slate-800 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={uploadedPreviewUrl}
+                    alt="Preview upload gambar"
+                    className="w-full h-full object-contain bg-black"
+                  />
+                  {phase === "processing" && (
+                    <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white p-4 text-center z-10">
+                      <RefreshCw className="w-9 h-9 animate-spin text-teal-400" />
+                      <p className="text-sm font-bold tracking-wide">Menganalisis dengan {currentMethodObj.name}...</p>
+                      <p className="text-xs text-slate-400">Server edge sedang memproses gambar</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Dropzone Area */
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) void handleProcessFile(file);
+                  }}
+                  className="w-full aspect-video rounded-2xl border-2 border-dashed border-slate-300 hover:border-teal-500 bg-slate-50 hover:bg-teal-50/20 flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-all shadow-inner group"
+                >
+                  <div className="p-3.5 bg-white rounded-2xl shadow-xs group-hover:scale-105 transition-transform mb-2 border border-slate-200">
+                    <Upload className="w-7 h-7 text-teal-600" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-800">Klik atau Tarik Foto ke Sini</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Format JPG, PNG, atau WebP</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="mt-3 bg-slate-900 text-white text-xs font-semibold rounded-xl pointer-events-none"
+                  >
+                    Pilih File Gambar
+                  </Button>
+                </div>
+              )}
+
+              {/* Tombol Aksi Upload */}
+              {phase === "result" ? (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-11"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-1.5" /> Ganti Gambar
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1 h-11 font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl"
+                    onClick={handleApply}
+                    disabled={!heightValid || !weightValid}
+                  >
+                    Pakai Hasil
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    className="w-full h-12 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={phase === "processing"}
+                  >
+                    <Upload className="w-4 h-4 mr-2" /> {uploadedPreviewUrl ? "Ganti File Gambar" : "Pilih File Gambar"}
+                  </Button>
+                </div>
+              )}
+
+              {/* Uji Coba Cepat dengan Dataset Ground Truth */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Uji Coba Cepat (Dataset Ground Truth Terkalibrasi):
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    disabled={phase === "processing"}
+                    onClick={() => void handleLoadPreset("/example/1_mediapipe_tb61.3cm_kalibrasi100cm.jpg", "mediapipe")}
+                    className="p-2 bg-white border border-slate-200 hover:border-teal-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
+                  >
+                    <div className="text-[11px] font-bold text-slate-900 truncate">1. MediaPipe Pose</div>
+                    <div className="text-[10px] text-teal-600 font-bold mt-0.5">Target: 61.3 cm</div>
+                    <div className="text-[9px] text-slate-400">Infantometer asli</div>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={phase === "processing"}
+                    onClick={() => void handleLoadPreset("/example/2_contour_tb78.6cm_kalibrasi100cm.jpg", "contour_caliper")}
+                    className="p-2 bg-white border border-slate-200 hover:border-sky-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
+                  >
+                    <div className="text-[11px] font-bold text-slate-900 truncate">2. Siluet Kontur</div>
+                    <div className="text-[10px] text-sky-600 font-bold mt-0.5">Target: 78.6 cm</div>
+                    <div className="text-[9px] text-slate-400">Matras biru polos</div>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={phase === "processing"}
+                    onClick={() => void handleLoadPreset("/example/3_aruco_tb79.3cm_marker10cm.jpg", "aruco_marker")}
+                    className="p-2 bg-white border border-slate-200 hover:border-purple-400 hover:shadow-xs rounded-xl text-left transition-all disabled:opacity-50"
+                  >
+                    <div className="text-[11px] font-bold text-slate-900 truncate">3. ArUco Marker</div>
+                    <div className="text-[10px] text-purple-600 font-bold mt-0.5">Target: 79.3 cm</div>
+                    <div className="text-[9px] text-slate-400">Marker fisik 10cm</div>
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
+            </>
+          )}
+
           <canvas ref={canvasRef} className="hidden" />
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => void handleFileUpload(e)}
+            onChange={handleFileUpload}
           />
 
           {error && (
             <div className="flex gap-2 items-start rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
-            </div>
-          )}
-
-          {phase !== "result" ? (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                type="button"
-                className="flex-1 h-12 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs"
-                onClick={() => void captureAndMeasure()}
-                isLoading={phase === "processing" && !uploadedPreviewUrl}
-                disabled={phase === "processing" || (cameraError !== null && !uploadedPreviewUrl)}
-              >
-                <Camera className="w-4 h-4 mr-2" /> Ambil Foto &amp; Ukur ({currentMethodObj.badge})
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-12 px-4 border-slate-300 hover:bg-slate-100 font-semibold text-slate-700 rounded-xl"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={phase === "processing"}
-                isLoading={phase === "processing" && !!uploadedPreviewUrl}
-              >
-                <Upload className="w-4 h-4 mr-1.5 text-slate-600" /> Upload Gambar
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="button" variant="outline" className="flex-1 h-11" onClick={retake}>
-                <RefreshCw className="w-4 h-4 mr-1.5" /> Foto Ulang
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-11"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="w-4 h-4 mr-1.5" /> Ganti Foto
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 h-11 font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl"
-                onClick={handleApply}
-                disabled={!heightValid || !weightValid}
-              >
-                Pakai Hasil
-              </Button>
             </div>
           )}
         </div>
