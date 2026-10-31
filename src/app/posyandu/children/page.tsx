@@ -15,7 +15,9 @@ import {
   MapPin,
   Scale,
   ArrowUpDown,
-  AlertTriangle
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
 
 // UI Components
@@ -49,7 +51,7 @@ export default function ChildrenPage() {
   // Filter & Search State
   const [searchTerm, setSearchTerm] = useState("");
   const [genderFilter, setGenderFilter] = useState<"all" | "L" | "P">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "waspada">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "waspada" | "unmeasured">("all");
   const [sortBy, setSortBy] = useState<"newest" | "nameAsc" | "ageAsc">("newest");
 
   // Toast State
@@ -150,8 +152,22 @@ export default function ChildrenPage() {
     // 3. Status Filter
     if (statusFilter !== "all") {
         result = result.filter(c => {
-           const isWaspada = c.lastWeightStatus === 'inadequate' || c.lastLengthStatus === 'inadequate';
-           return statusFilter === "waspada" ? isWaspada : !isWaspada;
+           const hasData = Boolean(
+             (c.lastWeight !== undefined && c.lastWeight !== null && c.lastWeight > 0) ||
+             (c.lastHeight !== undefined && c.lastHeight !== null && c.lastHeight > 0) ||
+             c.lastMeasurementDate ||
+             (c.lastWeightStatus && c.lastWeightStatus !== 'unknown') ||
+             c.lastNutritionStatus
+           );
+
+           if (statusFilter === "unmeasured") return !hasData;
+           if (!hasData) return false;
+
+           const isWaspada = c.lastWeightStatus === 'inadequate' || c.lastLengthStatus === 'inadequate' || c.isStunted || c.isWasted;
+           if (statusFilter === "waspada") return isWaspada;
+           if (statusFilter === "normal") return !isWaspada && c.lastWeightStatus !== 'excess';
+           return true;
+
         });
     }
 
@@ -255,6 +271,7 @@ export default function ChildrenPage() {
                   <option value="all">Semua Status</option>
                   <option value="waspada">⚠️ Waspada / Pantau</option>
                   <option value="normal">✅ Normal</option>
+                  <option value="unmeasured">Belum Ada Data</option>
                </select>
             </div>
 
@@ -306,7 +323,22 @@ export default function ChildrenPage() {
           // DATA LIST (CONTACT STYLE)
           processedChildren.map((child) => {
             const age = calculateAgeInMonths(child.dob instanceof Date ? child.dob : (child.dob as any).toDate());
-            const isWaspada = child.lastLengthStatus === 'inadequate' || child.lastWeightStatus === 'inadequate';
+            const hasData = Boolean(
+              (child.lastWeight !== undefined && child.lastWeight !== null && child.lastWeight > 0) ||
+              (child.lastHeight !== undefined && child.lastHeight !== null && child.lastHeight > 0) ||
+              child.lastMeasurementDate ||
+              (child.lastWeightStatus && child.lastWeightStatus !== 'unknown') ||
+              child.lastNutritionStatus
+            );
+
+            const isWaspada = hasData && (
+              child.lastLengthStatus === 'inadequate' || 
+              child.lastWeightStatus === 'inadequate' || 
+              child.isStunted || 
+              child.isWasted
+            );
+
+            const isExcess = hasData && !isWaspada && child.lastWeightStatus === 'excess';
             
             return (
               <Card 
@@ -333,11 +365,25 @@ export default function ChildrenPage() {
                              NIK: {child.nik || "-"}
                            </p>
                         </div>
-                        {/* Waspada Badge */}
-                        {isWaspada && (
+                        {/* Status Badge: Yang ada datanya ada statusnya, yang tidak ada datanya tidak ada statusnya */}
+                        {hasData && (
+                          isWaspada ? (
                             <Badge variant="danger" className="text-[9px] px-2 h-5 border-0 animate-pulse bg-rose-100 text-rose-700 shrink-0">
                                 <AlertTriangle className="w-3 h-3 mr-1" /> Waspada
                             </Badge>
+
+                          ) : isExcess ? (
+                            <Badge variant="warning" className="text-[9px] px-2 h-5 border-0 bg-amber-100 text-amber-700 shrink-0">
+                              <AlertCircle className="w-3 h-3 mr-1" /> Berlebih
+                            </Badge>
+
+                          ) : (
+                            <Badge variant="success" className="text-[9px] px-2 h-5 border-0 bg-emerald-100 text-emerald-700 shrink-0">
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Normal
+                            </Badge>
+
+                          )
+
                         )}
                     </div>
                     
