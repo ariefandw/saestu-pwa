@@ -146,7 +146,13 @@ export default function ChildrenPage() {
 
     // 2. Gender Filter
     if (genderFilter !== "all") {
-        result = result.filter(c => c.gender === genderFilter);
+        result = result.filter(c => {
+          if (!c.gender) return false;
+          const g = String(c.gender).trim().toUpperCase();
+          if (genderFilter === "L") return g === "L" || g.startsWith("LAKI");
+          if (genderFilter === "P") return g === "P" || g.startsWith("PEREMPUAN");
+          return g === genderFilter;
+        });
     }
 
     // 3. Status Filter
@@ -172,7 +178,31 @@ export default function ChildrenPage() {
     }
 
     // 4. Sort Filter
-    if (sortBy === "nameAsc") {
+    if (sortBy === "newest") {
+      const getTime = (val: any) => {
+        if (!val) return 0;
+        if (val instanceof Date) return val.getTime();
+        if (typeof val.toDate === "function") return val.toDate().getTime();
+        if (typeof val === "object" && typeof val.seconds === "number") return val.seconds * 1000;
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+      };
+
+      result.sort((a, b) => {
+        // Bandingkan waktu pengukuran terbaru atau pendaftaran terbaru
+        const timeA = Math.max(getTime(a.lastMeasurementDate), getTime(a.createdAt));
+        const timeB = Math.max(getTime(b.lastMeasurementDate), getTime(b.createdAt));
+
+        if (timeA !== timeB) return timeB - timeA;
+
+        // Fallback jika timestamp sama: urutkan tanggal lahir (usia termuda duluan)
+        const dobA = getTime(a.dob);
+        const dobB = getTime(b.dob);
+        if (dobA !== dobB) return dobB - dobA;
+
+        return a.name.localeCompare(b.name);
+      });
+    } else if (sortBy === "nameAsc") {
         result.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === "ageAsc") {
         result.sort((a, b) => {
