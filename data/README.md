@@ -34,3 +34,4 @@ python C:\dev\saestu-edge\estimate_length.py --image data\bayi01_newborn_tb49.2c
 # Uji Metode MediaPipe Pose (33 Joint Landmark)
 python C:\dev\saestu-edge\estimate_length.py --image data\bayi01_newborn_tb49.2cm.jpg --method mediapipe --max-dim-cm 100.0
 ```
+
