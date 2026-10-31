@@ -347,13 +347,13 @@ function MeasurementForm() {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h4 className="text-sm font-bold text-slate-900">Timbangan & Kamera IoT Saestu</h4>
+                                    <h4 className="text-sm font-bold text-slate-900">Sinkronisasi Perangkat IoT (Opsional)</h4>
                                     <span className="flex h-2 w-2 relative">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                     </span>
                                 </div>
-                                <p className="text-xs text-slate-500">Ambil data berat (g) dan panjang badan otomatis dari hardware posyandu.</p>
+                                <p className="text-xs text-slate-500">Tarik data jika perangkat IoT tersedia. BB diinput manual, TB diukur otomatis via kamera/CV.</p>
                             </div>
                         </div>
                         <Button
@@ -374,8 +374,8 @@ function MeasurementForm() {
                                 <Camera className="w-5 h-5" />
                             </div>
                             <div>
-                                <h4 className="text-sm font-bold text-slate-900">Ukur Tinggi via Kamera / Upload Foto</h4>
-                                <p className="text-xs text-slate-500">TB dideteksi dari kamera, BB diisi manual (opsional). Ada pengaturan kalibrasi.</p>
+                                <h4 className="text-sm font-bold text-slate-900">Ukur Tinggi via Kamera / Upload Foto (CV)</h4>
+                                <p className="text-xs text-slate-500">TB diukur otomatis via kamera/CV. BB diisi manual pada form di bawah.</p>
                             </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -429,7 +429,7 @@ function MeasurementForm() {
                                         <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                                             Berat Badan (BB)
                                         </label>
-                                        <p className="text-xs text-slate-500">Timbangan terkalibrasi</p>
+                                        <p className="text-xs text-slate-500">Input manual (timbangan posyandu)</p>
                                     </div>
                                 </div>
                                 <button 
@@ -465,7 +465,7 @@ function MeasurementForm() {
                                         <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                                             Tinggi Badan (TB/PB)
                                         </label>
-                                        <p className="text-xs text-slate-500">Infantometer / Stadiometer</p>
+                                        <p className="text-xs text-slate-500">Otomatis via kamera/CV atau manual</p>
                                     </div>
                                 </div>
                                 <button 

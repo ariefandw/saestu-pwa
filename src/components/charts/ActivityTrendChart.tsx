@@ -18,7 +18,7 @@ export default function ActivityTrendChart() {
     <Card className="p-5 sm:p-6 border-slate-100 shadow-sm rounded-3xl bg-white">
       <div className="mb-6">
         <h3 className="text-base font-black text-slate-900 tracking-tight">Tren Partisipasi</h3>
-        <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Jumlah balita ditimbang 6 bln terakhir</p>
+        <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Jumlah balita diukur 6 bln terakhir</p>
       </div>
 
       <div className="h-[250px] w-full ml-[-15px]">

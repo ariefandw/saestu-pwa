@@ -24,7 +24,7 @@ export default function PosyanduLayout({ children }: { children: React.ReactNode
   const [searchChild, setSearchChild] = useState("");
   const [isLoadingChildren, setIsLoadingChildren] = useState(false);
 
-  // Lazy load data anak hanya ketika tombol "Timbang Sekarang / Scan" diklik
+  // Lazy load data anak hanya ketika tombol "Ukur Sekarang / Scan" diklik
   useEffect(() => {
     if (isQuickOpen && userProfile?.posyanduId && childList.length === 0) {
       setIsLoadingChildren(true);
@@ -60,8 +60,8 @@ export default function PosyanduLayout({ children }: { children: React.ReactNode
         <KaderBottomNav onQuickActionClick={() => setIsQuickOpen(true)} />
       </div>
 
-      {/* 4. MODAL QUICK ACTION (Pilih Anak untuk Ditimbang) */}
-      <Modal isOpen={isQuickOpen} onClose={() => setIsQuickOpen(false)} title="Pilih Anak yang Ditimbang">
+      {/* 4. MODAL QUICK ACTION (Pilih Balita untuk Diukur) */}
+      <Modal isOpen={isQuickOpen} onClose={() => setIsQuickOpen(false)} title="Pilih Balita untuk Diukur">
          <div className="space-y-4 h-[60vh] flex flex-col">
             
             <div className="relative shrink-0">

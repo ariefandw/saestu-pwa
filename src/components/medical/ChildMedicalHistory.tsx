@@ -145,7 +145,7 @@ export default function ChildMedicalHistory({
                 className="w-full h-12 text-sm bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all active:scale-95 shadow-xs mt-4"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Input Data Timbang Baru
+                Input Data Pengukuran Baru
               </Button>
             )}
           </div>

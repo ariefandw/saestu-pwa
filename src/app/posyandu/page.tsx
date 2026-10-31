@@ -135,7 +135,7 @@ export default function KaderDashboard() {
                      <p className="text-xs font-medium text-blue-100 mb-6">Target cakupan wilayah kerja mencapai {progressPercent}%</p>
 
                      <Link href="/posyandu/children/add" className="inline-flex w-full md:w-auto items-center justify-center gap-2 bg-white text-blue-700 px-6 py-3.5 rounded-xl font-black text-sm hover:bg-blue-50 transition-colors active:scale-95 shadow-md">
-                        <Scale className="w-5 h-5" /> Input Hasil Timbang Baru
+                        <Scale className="w-5 h-5" /> Input Hasil Pengukuran Baru
                      </Link>
                   </div>
 
@@ -173,7 +173,7 @@ export default function KaderDashboard() {
                   <div className="flex-1">
                      <h4 className="font-bold text-emerald-800 text-sm">Target Tercapai Luar Biasa!</h4>
                      <p className="text-xs text-emerald-700/80 mt-1 leading-relaxed">
-                        Terima kasih Kader! Seluruh balita terdaftar telah ditimbang bulan ini. Laporan SI Posyandu sudah siap.
+                        Terima kasih Kader! Seluruh balita terdaftar telah diukur bulan ini. Laporan SI Posyandu sudah siap.
                      </p>
                   </div>
                </div>

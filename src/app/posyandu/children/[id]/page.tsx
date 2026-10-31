@@ -479,7 +479,7 @@ export default function ChildDetailPage() {
       </Modal>
 
       {/* --- MODAL KOREKSI MEASUREMENT NATIVE STYLE --- */}
-      <Modal isOpen={isMeasurementModalOpen} onClose={() => setIsMeasurementModalOpen(false)} title="Koreksi Data Timbang">
+      <Modal isOpen={isMeasurementModalOpen} onClose={() => setIsMeasurementModalOpen(false)} title="Koreksi Data Pengukuran">
         <form onSubmit={handleMeasurementEditSubmit} className="space-y-5 px-1 pb-1">
           <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3 mb-2 shadow-sm">
             <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />

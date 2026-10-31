@@ -46,7 +46,7 @@ export function KaderSidebar({ onQuickActionClick }: KaderSidebarProps) {
         
         <div className="pt-6 mt-6 border-t border-white/10">
           <button onClick={onQuickActionClick} className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-black transition-all shadow-lg shadow-blue-900/50 active:scale-95">
-            <ScanLine className="h-5 w-5" /> Timbang Sekarang
+            <ScanLine className="h-5 w-5" /> Ukur Sekarang
           </button>
         </div>
       </nav>
